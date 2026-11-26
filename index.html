@@ -549,6 +549,8 @@ body.locked header.top,body.locked main{visibility:hidden}
 <div id="tip"></div><div class="toast" id="toast"></div>
 
 <script>
+/* Espacio de guardado propio de cada copia publicada (GitHub Pages comparte el mismo origen entre repos) */
+const NS=(()=>{try{if(!/github\.io$/i.test(location.hostname))return'';const seg=(location.pathname.split('/').filter(Boolean)[0]||'').toLowerCase();return(!seg||seg==='tablero-tiempos')?'':'__'+seg.replace(/[^a-z0-9-]/g,'')}catch(e){return''}})();
 /* =================================================================
    CONFIG
 ================================================================= */
@@ -565,7 +567,7 @@ const TC=[ // con encierro
 const ALLT=[...TS,...TC];
 const META_DEF={encGeo:1,tot:30,s1:15,s2:30,s3:10,s4:10,e1:10,e2:7,e3:10,encH:1,maxTot:240};
 let METAS=Object.assign({},META_DEF);
-try{const m=JSON.parse(localStorage.getItem('tt4_metas')||'null');if(m)METAS=Object.assign({},META_DEF,m)}catch(e){}
+try{const m=JSON.parse(localStorage.getItem('tt4_metas'+NS)||'null');if(m)METAS=Object.assign({},META_DEF,m)}catch(e){}
 
 const BASES=[
  {k:'salida',grp:'pre',n:'Salida de choferes',req:1,d:'Base pie: una fila por ruta.',cols:['Fecha','Planilla','Chofer','DNI','OL'],sheet:/salida.*chofer|base.*tiempo|salidachofer/},
@@ -781,7 +783,7 @@ function classify(name,T){
 ================================================================= */
 const STORE={};// k -> {rows,file,n,from,to,miss,at}
 const idb={db:null,
-  async open(){if(this.db)return this.db;return this.db=await new Promise((res,rej)=>{try{const r=indexedDB.open('tablero_tiempos',1);r.onupgradeneeded=()=>r.result.createObjectStore('bases');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})},
+  async open(){if(this.db)return this.db;return this.db=await new Promise((res,rej)=>{try{const r=indexedDB.open('tablero_tiempos'+NS,1);r.onupgradeneeded=()=>r.result.createObjectStore('bases');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})},
   async put(k,v){try{const db=await this.open();await new Promise((res,rej)=>{const tx=db.transaction('bases','readwrite');tx.objectStore('bases').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}catch(e){}},
   async del(k){try{const db=await this.open();await new Promise(res=>{const tx=db.transaction('bases','readwrite');tx.objectStore('bases').delete(k);tx.oncomplete=res;tx.onerror=res})}catch(e){}},
   async all(){try{const db=await this.open();return await new Promise(res=>{const tx=db.transaction('bases');const st=tx.objectStore('bases');const out={};const rq=st.openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){out[c.key]=c.value;c.continue()}else res(out)};rq.onerror=()=>res({})})}catch(e){return{}}}
@@ -1768,9 +1770,9 @@ function renderDiag(){
   $('#tblDPat').innerHTML=rows.length?`<thead><tr><th>Patente</th><th>OL</th><th class="n">Sin geocerca</th><th class="n">Sin checklist</th><th class="n">Sin salida SIC</th><th class="n">Sin ruta planificada</th><th class="n">Sin km Geotab</th><th class="n">Días</th><th>Observación</th></tr></thead><tbody>`+
     rows.slice(0,200).map(x=>`<tr><td><b>${esc(x.pt)}</b></td><td>${esc(x.ol)}</td>${cell(x.sg,x.pre)}${cell(x.sc,x.pre)}${cell(x.ss,x.be)}${cell(x.sp,x.be)}${STORE.geotab?cell(x.sk,x.be):'<td class="n muted">—</td>'}<td class="n">${x.d.size}</td><td>${x.obs.map(o=>`<span class="tag" style="margin-right:4px">${o}</span>`).join('')}</td></tr>`).join('')+'</tbody>':'<tr><td class="ok">Todas las patentes del mes cruzan con todas las bases cargadas.</td></tr>';
 }
-$('#diag').addEventListener('toggle',()=>{try{localStorage.setItem('tt_diag',$('#diag').open?'1':'0')}catch(e){}renderDiag()});
+$('#diag').addEventListener('toggle',()=>{try{localStorage.setItem('tt_diag'+NS,$('#diag').open?'1':'0')}catch(e){}renderDiag()});
 $('#dMes').onchange=()=>renderDiag();
-try{if(localStorage.getItem('tt_diag')==='1')$('#diag').open=true}catch(e){}
+try{if(localStorage.getItem('tt_diag'+NS)==='1')$('#diag').open=true}catch(e){}
 
 /* =================================================================
    POST RUTA
@@ -1868,7 +1870,7 @@ $('#btnPXlsx').onclick=async()=>{try{const aoa=[PCOLS.map(c=>c[0])].concat((wind
    ÁRBOL DE TIEMPOS
 ================================================================= */
 const TGT_DEF={pre:30,tr:15,carga:20,portPre:5,chk:4,ruta:360,at:60,atMin:60,atSmk:60,desp:300,pnp:0,post:28,portPost:3,gatPost:5,fin:20,finMin:20,finSmk:5};
-let TGT=Object.assign({},TGT_DEF);try{const m=JSON.parse(localStorage.getItem('tt_tgt')||'null');if(m)TGT=Object.assign({},TGT_DEF,m)}catch(e){}
+let TGT=Object.assign({},TGT_DEF);try{const m=JSON.parse(localStorage.getItem('tt_tgt'+NS)||'null');if(m)TGT=Object.assign({},TGT_DEF,m)}catch(e){}
 const TF={months:new Set(),desde:'',hasta:'',ol:''};
 function setupTFilters(){const ds=(REC.length?REC:RREC).map(r=>r.fecha).sort();const lastM=(ds[ds.length-1]||'').slice(0,7);
   TF.desde=ds.find(d=>d.startsWith(lastM))||ds[0]||'';TF.hasta=ds[ds.length-1]||'';$('#tDesde').value=TF.desde;$('#tHasta').value=TF.hasta;
@@ -1943,7 +1945,7 @@ $('#btnTgt').onclick=()=>{const it=[['hd','Pre ruta'],['pre','Tiempo pre ruta to
   ['hd','Post ruta'],['post','Tiempo interno total'],['portPost','Portería'],['gatPost','Gatera'],['fin','Financiero'],['finMin','Financiero minoristas'],['finSmk','Financiero supermercados']];
   $('#tgtForm').innerHTML=it.map(([k,n])=>k==='hd'?`<div class="hd">${n}</div>`:`<label>${n}<small>minutos</small></label><input type="number" min="0" step="any" data-k="${k}" value="${TGT[k]}">`).join('');$('#mTgt').classList.add('on')};
 $('#mTgt').onclick=e=>{if(e.target.id==='mTgt')$('#mTgt').classList.remove('on')};
-$('#tgtOk').onclick=()=>{$$('#tgtForm input').forEach(i=>{const v=parseFloat(i.value);if(!isNaN(v))TGT[i.dataset.k]=v});try{localStorage.setItem('tt_tgt',JSON.stringify(TGT))}catch(e){}$('#mTgt').classList.remove('on');renderTree()};
+$('#tgtOk').onclick=()=>{$$('#tgtForm input').forEach(i=>{const v=parseFloat(i.value);if(!isNaN(v))TGT[i.dataset.k]=v});try{localStorage.setItem('tt_tgt'+NS,JSON.stringify(TGT))}catch(e){}$('#mTgt').classList.remove('on');renderTree()};
 $('#tgtReset').onclick=()=>{TGT=Object.assign({},TGT_DEF);$('#btnTgt').click()};
 
 /* =================================================================
@@ -2069,7 +2071,7 @@ function openMetas(){
   $('#metasForm').innerHTML=it.map(([k,n,d])=>k==='hd'?`<div class="hd">${n}</div>`:`<label>${n}${d?`<small>${d}</small>`:''}</label><input type="number" min="0" step="any" data-k="${k}" value="${METAS[k]}">`).join('');
   $('#mMetas').classList.add('on')}
 $('#btnMetas').onclick=openMetas;$('#mMetas').onclick=e=>{if(e.target.id==='mMetas')$('#mMetas').classList.remove('on')};
-$('#metasOk').onclick=()=>{$$('#metasForm input').forEach(i=>{const v=parseFloat(i.value);if(!isNaN(v))METAS[i.dataset.k]=v});try{localStorage.setItem('tt4_metas',JSON.stringify(METAS))}catch(e){}$('#mMetas').classList.remove('on');build();renderAll()};
+$('#metasOk').onclick=()=>{$$('#metasForm input').forEach(i=>{const v=parseFloat(i.value);if(!isNaN(v))METAS[i.dataset.k]=v});try{localStorage.setItem('tt4_metas'+NS,JSON.stringify(METAS))}catch(e){}$('#mMetas').classList.remove('on');build();renderAll()};
 $('#metasReset').onclick=()=>{METAS=Object.assign({},META_DEF);openMetas()};
 function renderAll(){if($('#v-jor').classList.contains('on'))renderJor();if($('#v-arbol').classList.contains('on'))renderTree();if($('#v-post').classList.contains('on'))renderPost();if($('#v-ruta').classList.contains('on'))renderRuta();if($('#v-pre').classList.contains('on'))renderPre();if($('#v-base').classList.contains('on'))renderBase()}
 function go(v){$$('#tabs button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));$$('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));if(v==='pre')renderPre();if(v==='base')renderBase();if(v==='ruta')renderRuta();if(v==='post')renderPost();if(v==='arbol')renderTree();if(v==='jor')renderJor();if(v==='carga')renderDiag();try{if(location.hash!=='#'+v)history.replaceState(null,'','#'+v)}catch(e){}}
@@ -2095,17 +2097,17 @@ async function loadAuth(){return AUTH_CFG}
 function unlock(){$('#login').classList.add('off');document.body.classList.remove('locked');startApp()}
 (async()=>{
   const auth=await loadAuth();
-  try{const raw=sessionStorage.getItem('tt_k');if(raw){const k=await crypto.subtle.importKey('raw',b64d(raw),{name:'AES-GCM'},true,['decrypt']);if(await tryKey(k,auth)){AUTH.key=k;unlock();return}}}catch(e){}
+  try{const raw=sessionStorage.getItem('tt_k'+NS);if(raw){const k=await crypto.subtle.importKey('raw',b64d(raw),{name:'AES-GCM'},true,['decrypt']);if(await tryKey(k,auth)){AUTH.key=k;unlock();return}}}catch(e){}
   $('#lgUser').focus();
   $('#loginForm').onsubmit=async e=>{e.preventDefault();$('#lgErr').textContent='';$('#lgBtn').disabled=true;$('#lgBtn').textContent='Verificando…';
     try{const k=await deriveKey($('#lgUser').value,$('#lgPass').value,auth);
       const ok=await tryKey(k,auth);
-      if(ok){AUTH.key=k;try{sessionStorage.setItem('tt_k',b64e(new Uint8Array(await crypto.subtle.exportKey('raw',k))))}catch(e){}unlock()}
+      if(ok){AUTH.key=k;try{sessionStorage.setItem('tt_k'+NS,b64e(new Uint8Array(await crypto.subtle.exportKey('raw',k))))}catch(e){}unlock()}
       else{$('#lgErr').textContent='Usuario o contraseña incorrectos.';$('#lgPass').value='';$('#lgPass').focus()}}
     catch(err){$('#lgErr').textContent='No se pudo verificar el acceso en este navegador.'}
     $('#lgBtn').disabled=false;$('#lgBtn').textContent='Ingresar'};
 })();
-$('#btnLogout').onclick=()=>{try{sessionStorage.removeItem('tt_k')}catch(e){}location.reload()};
+$('#btnLogout').onclick=()=>{try{sessionStorage.removeItem('tt_k'+NS)}catch(e){}location.reload()};
 async function startApp(){renderBases();const saved=await idb.all();let any=false;for(const b of BASES)if(saved[b.k]){STORE[b.k]=saved[b.k];any=true}
   PRE.deleted=new Set(saved.__meta?.deleted||[]);
   try{await cleanStored()}catch(e){console.error(e)}
