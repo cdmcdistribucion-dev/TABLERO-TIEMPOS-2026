@@ -177,11 +177,12 @@ body.locked header.top,body.locked main{visibility:hidden}
 <section class="view on" id="v-carga">
   <div class="card">
     <h2>Cargar bases</h2>
-    <p class="hint">Podés subir cada base en su tarjeta, o soltar acá el <b>reporte completo</b> (el Excel con todas las hojas) o varios archivos juntos: cada hoja se reconoce sola. La <b>Salida de choferes</b> es la base pie: todo se cruza contra sus planillas. Podés subir uno o varios meses: <b>los meses que subís reemplazan a los que ya estaban</b> y el resto se conserva, sin duplicar filas. Con “Borrar” quitás una base completa. Los archivos se procesan en tu navegador y quedan guardados en este equipo para la próxima vez.</p>
+    <p class="hint">Podés subir cada base en su tarjeta, o soltar acá el <b>reporte completo</b> (el Excel con todas las hojas) o varios archivos juntos: cada hoja se reconoce sola. La <b>Salida de choferes</b> es la base pie: todo se cruza contra sus planillas. Podés subir uno o varios meses: <b>los meses que subís reemplazan a los que ya estaban</b> y el resto se conserva, sin duplicar filas. Con “Borrar” quitás una base completa. Para pasar todo a otra copia del tablero, usá <b>Descargar base completa</b> y soltá ese Excel acá en la otra copia. Los archivos se procesan en tu navegador y quedan guardados en este equipo para la próxima vez.</p>
     <div class="drop" id="dropAll"><strong>Soltá acá el reporte completo o varios archivos (Excel o CSV)</strong> · o hacé clic para elegirlos<input type="file" id="fileAll" multiple accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.txt" hidden></div>
     <div class="bases" id="bases"></div>
     <div class="row" style="margin-top:14px">
       <button class="btn primary" id="btnProc" disabled>Armar base de tiempos →</button>
+      <button class="btn" id="btnFull">⬇ Descargar base completa (Excel)</button>
       <button class="btn" id="btnClear">Borrar todas las bases</button>
       <span class="muted" id="procMsg"></span>
     </div>
@@ -801,10 +802,11 @@ function readBook(buf,name,want){
   var isCsv=/\.(csv|txt)$/i.test(name);var wb;
   if(isCsv){var txt=new TextDecoder('utf-8').decode(buf);if(txt.indexOf('\uFFFD')>=0)txt=new TextDecoder('windows-1252').decode(buf);wb=XLSX.read(txt,{type:'string',raw:true});}
   else{
-    var names=XLSX.read(buf,{type:'array',bookSheets:true}).SheetNames;
+    var names=XLSX.read(buf,{type:'array',bookSheets:true}).SheetNames;var full=names.indexOf('TABLERO_INFO')>=0;
     var re=new RegExp(want,'i');var pick=names.filter(function(n){return re.test(n)});
     if(!pick.length)pick=names;
-    wb=XLSX.read(buf,{type:'array',dense:true,cellFormula:false,cellHTML:false,cellText:false,cellStyles:false,sheetRows:150000,sheets:pick});
+    if(full)pick=names.filter(function(n){return n==='TABLERO_INFO'||n.indexOf('_B_')===0});
+    wb=XLSX.read(buf,{type:'array',dense:true,cellFormula:false,cellHTML:false,cellText:false,cellStyles:false,sheetRows:full?0:150000,sheets:pick});
   }
   var out=[];wb.SheetNames.forEach(function(sn){var ws=wb.Sheets[sn];if(!ws)return;
     var aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null,blankrows:false});
@@ -843,6 +845,7 @@ async function ingest(files,forceKey){
       else sheets=await readFile(f);
     }catch(e){console.error(e);log.push(`✗ ${f.name}: no se pudo leer`);continue}
     busy(true,`Procesando ${f.name}…`);await new Promise(r=>setTimeout(r,20));
+    if(sheets.some(x=>x.name===FULL_SHEET)){log.push(`Base completa: ${f.name}`);const nb=await importFull(sheets,f.name,log);if(!nb)log.push(`✗ ${f.name}: no tiene bases para cargar`);continue}
     let used=0;
     for(const sh of sheets){
       if(!sh.aoa.length)continue;
@@ -2053,6 +2056,51 @@ $('#pgJDet').onclick=e=>{const b=e.target.closest('[data-jpg]');if(b){jPage+=+b.
 $('#jQDet').oninput=()=>{jPage=0;renderJDet(JREC.filter(jOk))};$('#jQ').oninput=()=>renderJor();$('#jRankBy').onchange=()=>renderJor();
 $('#btnJXlsx').onclick=async()=>{try{const aoa=[JCOLS.map(c=>c[0])].concat((window._jdet||[]).map(r=>JCOLS.map(c=>c[1](r))));const ws=XLSX.utils.aoa_to_sheet(aoa);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'JORNADA');
   const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});await DL.save({filename:'Jornada_laboral.xlsx',data:new Blob([buf])})}catch(e){if(e&&e.code==='declined')return;toast('No se pudo descargar')}};
+
+/* =================================================================
+   BASE COMPLETA (exportar / importar)
+================================================================= */
+const FULL_SHEET='TABLERO_INFO';
+const rawName=k=>'_B_'+k;
+function sheetFromObjs(rows){const f=[...new Set(rows.flatMap(r=>Object.keys(r)))];const aoa=[f];for(const r of rows)aoa.push(f.map(x=>{const v=r[x];return v===undefined?null:v}));return XLSX.utils.aoa_to_sheet(aoa)}
+async function exportFull(){
+  if(!BASES.some(b=>STORE[b.k])){toast('No hay bases cargadas para descargar');return}
+  if(!DL){toast('La descarga no está disponible en esta vista');return}
+  busy(true,'Armando la base completa…');await new Promise(r=>setTimeout(r,30));
+  try{
+    const wb=XLSX.utils.book_new();
+    const info=[['Tablero de Control de Tiempos · CD Mercado Central'],['Base completa generada el',new Date().toLocaleString('es-AR')],[],['Base','Clave','Filas','Desde','Hasta']];
+    BASES.forEach(b=>{const S=STORE[b.k];if(S)info.push([b.n,b.k,S.n,S.from?fmtD(S.from):'',S.to?fmtD(S.to):''])});
+    info.push([],['Para cargarla en otra copia del tablero: Cargar bases → soltar este archivo. Las hojas que empiezan con _B_ son las bases procesadas; no las edites.']);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),FULL_SHEET);
+    const add=(name,cols,rows)=>{if(!rows.length)return;const aoa=[cols.map(c=>c[0])];rows.forEach(r=>aoa.push(cols.map(c=>c[1](r))));XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),name)};
+    busy(true,'Armando la base completa… tiempos calculados');await new Promise(r=>setTimeout(r,20));
+    add('PRE RUTA',BCOLS,REC);add('EN RUTA',RCOLS,RREC);add('POST RUTA',PCOLS,PREC);add('JORNADA',JCOLS,JREC);
+    add('KM PLAN VS REAL',[['Fecha',x=>fmtD(x.f)],['Patente',x=>x.pat],['OL',x=>x.ol],['Planillas',x=>x.n],['Km planificados',x=>x.plan!=null?Math.round(x.plan*10)/10:''],['Km reales (Geotab)',x=>x.real??'']],KM);
+    for(const b of BASES){const S=STORE[b.k];if(!S)continue;busy(true,`Armando la base completa… ${b.n}`);await new Promise(r=>setTimeout(r,10));
+      if(b.k==='rom'){XLSX.utils.book_append_sheet(wb,sheetFromObjs(S.rows.routes),'_B_rom_rutas');XLSX.utils.book_append_sheet(wb,sheetFromObjs(S.rows.stops),'_B_rom_paradas')}
+      else XLSX.utils.book_append_sheet(wb,sheetFromObjs(S.rows),rawName(b.k))}
+    busy(true,'Generando el archivo Excel…');await new Promise(r=>setTimeout(r,20));
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx',compression:true});
+    busy(false);
+    const d=new Date();await DL.save({filename:`Base_completa_tiempos_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.xlsx`,data:new Blob([buf])});
+  }catch(e){busy(false);if(e&&e.code==='declined')return;console.error(e);toast('No se pudo generar la base completa')}
+}
+function aoaToObjs(aoa){const h=aoa[0].map(String);const out=[];for(let i=1;i<aoa.length;i++){const r=aoa[i];if(!r)continue;const o={};let any=false;for(let j=0;j<h.length;j++){const v=r[j];if(v!=null&&v!==''){o[h[j]]=v;any=true}}if(any)out.push(o)}return out}
+const FULL_STR={salida:['p','dni','ch','ol','f'],sic:['p','pat','fr','vta','ol'],molE:['d','k'],molS:['d','k'],b450:['p','pat','fr','vta'],chk:['pt','s'],geo:['pt','z'],tr:['d','f'],bees71:['f','p','cli','nom','est','ef','mot','mrea','mmod','rech','pat','ol','seg','ch'],bees72:['p','clas','fl','ol'],geotab:['pt','f','ol'],rom_r:['rid','f','placa','ol','dep'],rom_s:['rid','cli']};
+const fixStr=(rows,keys)=>{for(const r of rows)for(const k of keys)if(r[k]!=null)r[k]=String(r[k]);return rows};
+async function importFull(sheets,fname,log){
+  const by=new Map(sheets.map(s=>[s.name,s.aoa]));let n=0;
+  for(const b of BASES){
+    if(b.k==='rom'){const R=by.get('_B_rom_rutas'),S=by.get('_B_rom_paradas');if(!R||!S)continue;
+      const st=await saveBase('rom',{routes:fixStr(aoaToObjs(R),FULL_STR.rom_r),stops:fixStr(aoaToObjs(S),FULL_STR.rom_s)},fname,[]);n++;log.push(`✓ ${b.n}: ${(STORE.rom.n).toLocaleString('es-AR')} paradas${st.rep.length?' · reemplazó '+st.rep.map(mLbl).join(', '):''}`);continue}
+    const A=by.get(rawName(b.k));if(!A||A.length<2)continue;
+    const rows=fixStr(aoaToObjs(A),FULL_STR[b.k]||[]);
+    const st=await saveBase(b.k,rows,fname,[]);n++;log.push(`✓ ${b.n}: ${rows.length.toLocaleString('es-AR')} filas${st.rep.length?' · reemplazó '+st.rep.map(mLbl).join(', '):''}${st.dup?' · '+st.dup+' duplicadas descartadas':''}`);
+  }
+  return n;
+}
+$('#btnFull').onclick=exportFull;
 
 /* =================================================================
    COPY / METAS / NAV
