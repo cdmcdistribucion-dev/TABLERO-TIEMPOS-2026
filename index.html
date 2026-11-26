@@ -177,12 +177,13 @@ body.locked header.top,body.locked main{visibility:hidden}
 <section class="view on" id="v-carga">
   <div class="card">
     <h2>Cargar bases</h2>
-    <p class="hint">Podés subir cada base en su tarjeta, o soltar acá el <b>reporte completo</b> (el Excel con todas las hojas) o varios archivos juntos: cada hoja se reconoce sola. La <b>Salida de choferes</b> es la base pie: todo se cruza contra sus planillas. Podés subir uno o varios meses: <b>los meses que subís reemplazan a los que ya estaban</b> y el resto se conserva, sin duplicar filas. Con “Borrar” quitás una base completa. Para pasar todo a otra copia del tablero, usá <b>Descargar base completa</b> y soltá ese Excel acá en la otra copia. Los archivos se procesan en tu navegador y quedan guardados en este equipo para la próxima vez.</p>
-    <div class="drop" id="dropAll"><strong>Soltá acá el reporte completo o varios archivos (Excel o CSV)</strong> · o hacé clic para elegirlos<input type="file" id="fileAll" multiple accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.txt" hidden></div>
+    <p class="hint">Podés subir cada base en su tarjeta, o soltar acá el <b>reporte completo</b> (el Excel con todas las hojas) o varios archivos juntos: cada hoja se reconoce sola. La <b>Salida de choferes</b> es la base pie: todo se cruza contra sus planillas. Podés subir uno o varios meses: <b>los meses que subís reemplazan a los que ya estaban</b> y el resto se conserva, sin duplicar filas. Con “Borrar” quitás una base completa. Para pasar todo a otra copia del tablero, usá <b>Descargar base completa</b> y soltá ese archivo acá en la otra copia. Los archivos se procesan en tu navegador y quedan guardados en este equipo para la próxima vez.</p>
+    <div class="drop" id="dropAll"><strong>Soltá acá el reporte completo o varios archivos (Excel o CSV)</strong> · o hacé clic para elegirlos<input type="file" id="fileAll" multiple accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.txt,.json" hidden></div>
     <div class="bases" id="bases"></div>
     <div class="row" style="margin-top:14px">
       <button class="btn primary" id="btnProc" disabled>Armar base de tiempos →</button>
-      <button class="btn" id="btnFull">⬇ Descargar base completa (Excel)</button>
+      <button class="btn" id="btnFull">⬇ Descargar base completa</button>
+      <button class="btn" id="btnTiempos">⬇ Descargar tiempos calculados (Excel)</button>
       <button class="btn" id="btnClear">Borrar todas las bases</button>
       <span class="muted" id="procMsg"></span>
     </div>
@@ -575,7 +576,7 @@ const BASES=[
  {k:'sic',grp:'pre',n:'SIC Liberación',req:1,d:'Patente, hora de salida y de regreso del camión. Se usa en Pre ruta, En ruta y Post ruta.',cols:['Planilla','Patente','Fecha & Hora SALIDA','Vuelta'],sheet:/sic|liberac/},
  {k:'molE',grp:'pre',n:'Molinete de entrada',req:1,d:'Fichadas de ingreso. Se toma la primera del día (Pre ruta y jornada laboral).',cols:['DNI','Fecha (con hora)'],sheet:/molinete.*entr|entrada/},
  {k:'b450',grp:'pre',n:'450 · Repartos',req:1,d:'Fecha y hora de carga: define el encierro.',cols:['Planilla','Patente','Fecha','Hora salida'],sheet:/450|reparto/},
- {k:'chk',grp:'pre',n:'Checklist',d:'Checklist previo a salir (se usan los de SALIDA).',cols:['Placa','Subtipo','Hr inicio','Hr final','Tempo'],sheet:/check/},
+ {k:'chk',grp:'pre',n:'Checklist',d:'Checklist de SALIDA (pre ruta) y de RETORNO (post ruta).',cols:['Placa','Subtipo','Hr inicio','Hr final','Tempo'],sheet:/check/},
  {k:'geo',grp:'pre',n:'Geocercas',d:'Entradas y salidas por zona del CD, por patente. Se usa en Pre ruta y Post ruta.',cols:['Dispositivo','Ubicación','Llegada','Salida'],sheet:/geocerc/},
  {k:'tr',grp:'pre',n:'Team Room',d:'Asistencia a Team Room por DNI y día.',cols:['DNI','Hora de inicio','Hora de finalización'],sheet:/team/},
  {k:'bees71',grp:'ruta',pri:3,n:'BEES Deliver · clientes (data 71)',req:1,d:'Una fila por cliente visitado: visitas, paradas, intentos y motivos.',cols:['FECHA','_ID_PLANILLA','_ID_CLIENTE','Tiempo de Visita','Segmento Venta'],sheet:/data.?71|bees.*client/},
@@ -837,6 +838,7 @@ async function ingest(files,forceKey){
   const log=[];
   for(const f of files){
     busy(true,`Leyendo ${f.name}…`);
+    if(await isFullJson(f)){try{log.push(`Base completa: ${f.name}`);const nb=await importFullJson(f,log);if(!nb)log.push(`✗ ${f.name}: no tiene bases para cargar`)}catch(e){console.error(e);log.push(`✗ ${f.name}: ${e.message||'no se pudo leer'}`)}continue}
     if(/\.(csv|txt)$/i.test(f.name)){let head='';try{head=await f.slice(0,4096).text()}catch(e){}
       if(forceKey==='rom'||/data\s*roteiro/i.test(head)){const d=await ingestRomCsv(f);if(d)log.push(`✓ ${f.name} → Ruteo planificado: ${d.st.rep.length?'reemplazó '+d.st.rep.map(mLbl).join(', ')+' · ':''}${d.st.nw.toLocaleString('es-AR')} rutas nuevas${d.st.upd?' · '+d.st.upd.toLocaleString('es-AR')+' ya estaban (actualizadas)':''}${d.st.dup?' · '+d.st.dup.toLocaleString('es-AR')+' filas duplicadas descartadas':''}`);else log.push(`✗ ${f.name}: no se reconocieron las columnas del romaneio`);continue}}
     let sheets;
@@ -1049,7 +1051,7 @@ function renderBases(){
     return hd+`<div class="base" data-k="${b.k}"><div class="t"><b>${b.n}</b>${b.req?'<span class="req">obligatoria</span>':b.opt?'<span class="req">opcional</span>':''}</div>
       <div class="d">${b.d}</div><div class="cols">${b.cols.map(c=>`<code>${c}</code>`).join('')}</div><div class="st">${st}</div>
       <div class="acts"><button class="btn sm" data-act="up">${s?'Subir meses (Excel o CSV)':'Subir Excel o CSV'}</button>${s?'<button class="btn sm" data-act="del" style="color:var(--crit)">Borrar</button>':''}</div>
-      <input type="file" hidden accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.txt"></div>`}).join('');
+      <input type="file" hidden accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.txt,.json"></div>`}).join('');
   $('#btnProc').disabled=!(STORE.salida||STORE.bees71);
 }
 $('#bases').addEventListener('click',async e=>{
@@ -1722,7 +1724,7 @@ function renderDiag(){
   const pm=(arr,f)=>{const o={};arr.forEach(r=>{const m=r.fecha.slice(0,7);const x=o[m]||(o[m]={n:0,k:0});x.n++;if(f(r))x.k++});return o};
   const IND=[];
   if(REC.length){IND.push(['Pre ruta · planillas',null,REC,()=>true],['con salida SIC','pre',REC,r=>r.sal!=null],['con fichada de molinete','pre',REC,r=>r.mol!=null],['con hora de carga 450','pre',REC,r=>r.c450!=null],['con encierro definido','pre',REC,r=>r.enc!=='SIN DATO'],['con checklist de salida','pre',REC,r=>r.chkIni!=null],['con alguna geocerca','pre',REC,r=>!!(r.Z||r.dockIn||r.portIn)],['con tiempo pre ruta','pre',REC,r=>r.total!=null])}
-  if(PREC.length){IND.push(['Post ruta · choferes-día',null,PREC,()=>true],['con fichada de salida en molinete','post',PREC,r=>r.msal!=null],['con tiempo interno','post',PREC,r=>r.tot!=null],['con geocercas en la ventana','post',PREC,r=>!!r.segOk])}
+  if(PREC.length){IND.push(['Post ruta · choferes-día',null,PREC,()=>true],['con fichada de salida en molinete','post',PREC,r=>r.msal!=null],['con tiempo interno','post',PREC,r=>r.tot!=null],['con geocercas en la ventana','post',PREC,r=>!!r.segOk],['con checklist de retorno','post',PREC,r=>r.chkrIni!=null])}
   if(RREC.length){IND.push(['En ruta · planillas BEES',null,RREC,()=>true],['con salida SIC','ruta',RREC,r=>r.srcS==='SIC'],['con regreso SIC','ruta',RREC,r=>r.srcR==='SIC'],['con ruta en el romaneio','ruta',RREC,r=>!!r.plan],['en data 72','ruta',RREC,r=>r.teoR!=null||r.b72R!=null],['con km en Geotab','ruta',RREC,r=>r.kmReal!=null],['con nombre de chofer','ruta',RREC,r=>!!r.dni],['con tiempo en ruta','ruta',RREC,r=>r.tRuta!=null])}
   const cm=[...new Set(IND.flatMap(x=>x[2].map(r=>r.fecha.slice(0,7))))].sort();
   $('#tblDCruce').innerHTML=`<thead><tr><th>Indicador</th>${cm.map(m=>`<th class="n" style="${m===M?'color:var(--accent)':''}">${mLbl(m)}</th>`).join('')}</tr></thead><tbody>`+IND.map(([lab,g,arr,f])=>{const o=pm(arr,f);
@@ -1780,13 +1782,14 @@ try{if(localStorage.getItem('tt_diag'+NS)==='1')$('#diag').open=true}catch(e){}
 /* =================================================================
    POST RUTA
 ================================================================= */
-const PT=[{k:'desc',n:'Descarga',c:'--s2',d:'Tiempo en geocercas de carga/descarga y dock depósito (vacíos, rechazos).'},{k:'verif',n:'Verificación',c:'--s1',d:'Tiempo en la geocerca de la gatera.'},{k:'ctrl',n:'Control',c:'--e2',d:'Tiempo en la geocerca de portería.'},{k:'fin',n:'Financiero',c:'--s4',d:'Resto del tiempo interno: caja y rendición de la planilla.'}];
+const PT=[{k:'desc',n:'Descarga',c:'--s2',d:'Tiempo en geocercas de carga/descarga y dock depósito (vacíos, rechazos).'},{k:'chkr',n:'Checklist de retorno',c:'--s3',d:'Duración del checklist de retorno (base Checklist, tipo RETORNO).'},{k:'verif',n:'Verificación',c:'--s1',d:'Tiempo en la geocerca de la gatera.'},{k:'ctrl',n:'Control',c:'--e2',d:'Tiempo en la geocerca de portería.'},{k:'fin',n:'Financiero',c:'--s4',d:'Resto del tiempo interno: caja y rendición de la planilla.'}];
 let PREC=[],PQ={};
 function unionMin(iv){if(!iv.length)return 0;iv.sort((a,b)=>a[0]-b[0]);let t=0,[s,e]=iv[0];for(let i=1;i<iv.length;i++){const[a,b]=iv[i];if(a>e){t+=e-s;s=a;e=b}else e=Math.max(e,b)}return(t+e-s)/MIN}
 function buildPost(){
   PREC=[];PQ={};if(!STORE.salida||!STORE.sic||!STORE.molS)return;
   const sic=new Map();STORE.sic.rows.forEach(r=>{if(!sic.has(r.p))sic.set(r.p,r)});
   const ms=new Map();STORE.molS.rows.forEach(r=>{(ms.get(r.d)||ms.set(r.d,[]).get(r.d)).push(r.t)});for(const a of ms.values())a.sort((x,y)=>x-y);
+  const chkR=new Map();(STORE.chk?.rows||[]).forEach(r=>{if(r.s!=='R')return;(chkR.get(r.pt)||chkR.set(r.pt,[]).get(r.pt)).push(r)});
   const geo=new Map();(STORE.geo?.rows||[]).forEach(r=>{if(!'DKGP'.includes(r.z))return;(geo.get(r.pt)||geo.set(r.pt,[]).get(r.pt)).push(r)});
   const byCD=new Map();STORE.salida.rows.forEach(s=>{if(!s.dni)return;const k=s.dni+'|'+s.f;(byCD.get(k)||byCD.set(k,[]).get(k)).push(s)});
   let nCD=0,noReg=0,noMol=0;
@@ -1798,12 +1801,14 @@ function buildPost(){
     const R={fecha:last.s.f,dni:last.s.dni,chofer:last.s.ch,ol:OLSIG(last.s.ol)||'—',planilla:last.s.p,vueltas:ps.length,patente:last.si.pat||'',reg,msal:out??null,obs:[]};
     if(out==null){noMol++;R.obs.push('Sin fichada de salida en molinete');PREC.push(R);continue}
     R.tot=Math.max(0,(out-reg)/MIN);if(R.tot>8*60){R.obs.push('Más de 8 h');R.tot=null;PREC.push(R);continue}
+    R.chkr=null;R.chkrIni=null;{const L=R.patente?chkR.get(R.patente):null;if(L){const c=L.filter(x=>x.a>=reg-30*MIN&&x.a<=out).sort((a,b)=>a.a-b.a)[0];
+      if(c){const b2=Math.min(c.b??(c.a+(c.du||0)*MIN),out),a2=Math.max(c.a,reg-15*MIN);R.chkrIni=c.a;R.chkr=Math.max(0,Math.min(R.tot,(b2-a2)/MIN))}}if(STORE.chk&&R.chkrIni==null)R.obs.push('Sin checklist de retorno')}
     const G=R.patente?geo.get(R.patente):null;const lo=reg-15*MIN;
     if(G){const iv={D:[],G:[],P:[]};let any=false;
       for(const g of G){if(g.b<lo||g.a>out)continue;const a=Math.max(g.a,lo),b=Math.min(g.b,out);if(b<=a)continue;any=true;iv[g.z==='K'?'D':g.z].push([a,b])}
-      if(any){R.desc=unionMin(iv.D);R.verif=unionMin(iv.G);R.ctrl=unionMin(iv.P);const used=R.desc+R.verif+R.ctrl;
-        if(used>R.tot){const f=R.tot/used;R.desc*=f;R.verif*=f;R.ctrl*=f;R.obs.push('Geocercas exceden el tiempo interno (se ajustó)')}
-        R.fin=Math.max(0,R.tot-R.desc-R.verif-R.ctrl);R.segOk=true}
+      if(any){R.desc=unionMin(iv.D);R.verif=unionMin(iv.G);R.ctrl=unionMin(iv.P);const ck=R.chkr||0;const used=R.desc+R.verif+R.ctrl+ck;
+        if(used>R.tot){const f=R.tot/used;R.desc*=f;R.verif*=f;R.ctrl*=f;if(R.chkr!=null)R.chkr*=f;R.obs.push('Tiempos exceden el tiempo interno (se ajustó)')}
+        if(R.chkr==null)R.chkr=0;R.fin=Math.max(0,R.tot-R.desc-R.verif-R.ctrl-R.chkr);R.segOk=true}
       else R.obs.push('Sin geocercas en la ventana')}
     else R.obs.push('Patente sin geocercas');
     PREC.push(R);
@@ -1854,10 +1859,10 @@ function renderPost(){
     o.w=PT.map(t=>({t,v:o[t.k]!=null&&cd[t.k]!=null?o[t.k]-cd[t.k]:null})).filter(x=>x.v!=null).sort((x,y)=>y.v-x.v)[0];return o}).sort((a,b)=>(b[key]??-1)-(a[key]??-1));
   $('#tblPCh').innerHTML=`<thead><tr><th>#</th><th>Chofer</th><th>OL</th><th class="n">Días</th>${PTT.map(t=>`<th class="n">${t.n}</th>`).join('')}<th>Dónde demora más</th></tr></thead><tbody>`+rk.slice(0,200).map((o,i)=>`<tr><td class="muted">${i+1}</td><td><b>${esc(o.ch)}</b> <span class="muted">${esc(o.dni)}</span></td><td>${o.ol}</td><td class="n">${o.n}</td>${PTT.map(t=>`<td class="n">${t.k==='tot'?'<b>'+r1(o[t.k])+'</b>':r1(o[t.k])}</td>`).join('')}<td>${o.w&&o.w.v>0.5?`<span class="dot" style="background:var(${o.w.t.c})"></span>${o.w.t.n} <span class="muted">+${r1(o.w.v)}′ vs CD</span>`:'<span class="muted">—</span>'}</td></tr>`).join('')+'</tbody>';
   renderPDet(P);
-  $('#pQual').innerHTML=`<div><b>${r0(PQ.nCD)}</b>choferes-día en la Salida de choferes</div><div><b>${pct(PQ.nCD?(PQ.nCD-PQ.noReg)/PQ.nCD:null)}</b>con hora de regreso en SIC</div><div><b>${pct(PQ.n?(PQ.n-PQ.noMol)/PQ.n:null)}</b>con fichada de salida en molinete</div><div><b>${pct(PQ.tot?PQ.seg/PQ.tot:null)}</b>con geocercas en la ventana</div>`;
+  $('#pQual').innerHTML=`<div><b>${r0(PQ.nCD)}</b>choferes-día en la Salida de choferes</div><div><b>${pct(PQ.nCD?(PQ.nCD-PQ.noReg)/PQ.nCD:null)}</b>con hora de regreso en SIC</div><div><b>${pct(PQ.n?(PQ.n-PQ.noMol)/PQ.n:null)}</b>con fichada de salida en molinete</div><div><b>${pct(PQ.tot?PQ.seg/PQ.tot:null)}</b>con geocercas en la ventana</div><div><b>${pct(PQ.tot?PREC.filter(r=>r.tot!=null&&r.chkrIni!=null).length/PQ.tot:null)}</b>con checklist de retorno</div>`;
 }
 ['pRankBy','pMin'].forEach(id=>$('#'+id).onchange=()=>renderPost());$('#pQ').oninput=()=>renderPost();
-const PCOLS=[['Fecha',r=>fmtD(r.fecha)],['Chofer',r=>r.chofer],['DNI',r=>r.dni],['OL',r=>r.ol],['Última planilla',r=>r.planilla],['Planillas del día',r=>r.vueltas,1],['Patente',r=>r.patente],['Regreso (SIC)',r=>fmtDT(r.reg)],['Salida molinete',r=>fmtDT(r.msal)],
+const PCOLS=[['Fecha',r=>fmtD(r.fecha)],['Chofer',r=>r.chofer],['DNI',r=>r.dni],['OL',r=>r.ol],['Última planilla',r=>r.planilla],['Planillas del día',r=>r.vueltas,1],['Patente',r=>r.patente],['Regreso (SIC)',r=>fmtDT(r.reg)],['Salida molinete',r=>fmtDT(r.msal)],['Checklist retorno (inicio)',r=>fmtDT(r.chkrIni)],
  ['Tiempo interno (min)',r=>r.tot!=null?Math.round(r.tot):'',1],...PT.map(t=>[t.n+' (min)',r=>r[t.k]!=null?Math.round(r[t.k]*10)/10:'',1]),['Observaciones',r=>r.obs.join('; ')]];
 let pPage=0;
 function pDetRows(P){const q=norm($('#pQDet').value);return q?P.filter(r=>norm(r.chofer+r.dni+r.planilla+r.patente+r.fecha).includes(q)):P}
@@ -1907,6 +1912,7 @@ function buildTree(){
       nd('pnp','Paradas no planificadas',R.map(r=>r.tnp),TGT.pnp,null,[],'Minutos por planilla')])]);
   const finSeg=f=>Qs.filter(r=>f(segOf.get(r.planilla))).map(r=>r.fin);
   const post=nd('post','Post ruta (tiempo interno)',Qt.map(r=>r.tot),TGT.post,null,[
+    nd('chkr','Checklist de retorno',Qs.map(r=>r.chkr),null),
     nd('desc','Descarga',Qs.map(r=>r.desc),null),
     nd('gatPost','Gatera (verificación)',Qs.map(r=>r.verif),TGT.gatPost),
     nd('portPost','Portería (control)',Qs.map(r=>r.ctrl),TGT.portPost),
@@ -2100,7 +2106,53 @@ async function importFull(sheets,fname,log){
   }
   return n;
 }
-$('#btnFull').onclick=exportFull;
+/* ---------- base completa en formato liviano (.json por líneas) ---------- */
+const FULL_TAG='tiempos-cdmc';
+function colEnc(a){const f=[...new Set(a.flatMap(r=>Object.keys(r)))];return{fields:f,cols:f.map(x=>{const c=a.map(r=>r[x]===undefined?null:r[x]);
+  const strs=c.filter(v=>typeof v==='string');if(strs.length>c.length*.5&&c.every(v=>v===null||typeof v==='string')){const u=[...new Set(strs)];if(u.length<c.length*.4){const ix=new Map(u.map((v,j)=>[v,j]));return{d:u,i:c.map(v=>v===null?-1:ix.get(v))}}}return c})}}
+async function exportFullJson(){
+  if(!BASES.some(b=>STORE[b.k])){toast('No hay bases cargadas para descargar');return}
+  busy(true,'Armando la base completa…');await new Promise(r=>setTimeout(r,30));
+  try{
+    const parts=[];const head={tablero:FULL_TAG,v:1,fecha:new Date().toISOString(),bases:{}};
+    BASES.forEach(b=>{const S=STORE[b.k];if(S)head.bases[b.k]={n:S.n,from:S.from,to:S.to,files:S.files}});
+    parts.push(JSON.stringify(head)+'\n');const CH=50000;
+    for(const b of BASES){const S=STORE[b.k];if(!S)continue;busy(true,`Armando la base completa… ${b.n}`);await new Promise(r=>setTimeout(r,10));
+      const lists=b.k==='rom'?[['routes',S.rows.routes],['stops',S.rows.stops]]:[['rows',S.rows]];
+      for(const [sub,arr] of lists)for(let i=0;i<arr.length||i===0;i+=CH){parts.push(JSON.stringify({k:b.k,sub,d:colEnc(arr.slice(i,i+CH))})+'\n');if(!arr.length)break}}
+    const blob=new Blob(parts,{type:'application/json'});busy(false);
+    const d=new Date();await saveFile(`Base_completa_tiempos_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`,blob);
+  }catch(e){busy(false);console.error(e);toast('No se pudo generar la base completa: '+(e&&e.message||e))}
+}
+async function exportTiemposXlsx(){
+  if(!REC.length&&!RREC.length&&!PREC.length&&!JREC.length){toast('No hay tiempos calculados para descargar');return}
+  busy(true,'Armando el Excel de tiempos…');await new Promise(r=>setTimeout(r,30));
+  try{const wb=XLSX.utils.book_new();
+    const add=(name,cols,rows)=>{if(!rows.length)return;const aoa=[cols.map(c=>c[0])];rows.forEach(r=>aoa.push(cols.map(c=>c[1](r))));XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),name)};
+    add('PRE RUTA',BCOLS,REC);add('EN RUTA',RCOLS,RREC);add('POST RUTA',PCOLS,PREC);add('JORNADA',JCOLS,JREC);
+    add('KM PLAN VS REAL',[['Fecha',x=>fmtD(x.f)],['Patente',x=>x.pat],['OL',x=>x.ol],['Planillas',x=>x.n],['Km planificados',x=>x.plan!=null?Math.round(x.plan*10)/10:''],['Km reales (Geotab)',x=>x.real??'']],KM);
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx',compression:true});busy(false);
+    const d=new Date();await saveFile(`Tiempos_calculados_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.xlsx`,new Blob([buf]));
+  }catch(e){busy(false);console.error(e);toast('No se pudo generar el Excel: '+(e&&e.message||e))}
+}
+async function saveFile(name,blob){
+  if(DL){try{await DL.save({filename:name,data:blob});return}catch(e){if(e&&e.code==='declined')return;if(!['unavailable','not_granted','capability_disabled','capability_removed'].includes(e&&e.code)){toast('No se pudo descargar ('+(e&&e.code||e)+')');return}}}
+  try{const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}catch(e){toast('El navegador bloqueó la descarga')}
+}
+async function readLines(file,onLine,onProg){const rd=file.stream().getReader();const dec=new TextDecoder('utf-8');let buf='',read=0;
+  for(;;){const{done,value}=await rd.read();if(value){read+=value.length;buf+=dec.decode(value,{stream:true});let nl;while((nl=buf.indexOf('\n'))>=0){const l=buf.slice(0,nl);buf=buf.slice(nl+1);if(l.trim())await onLine(l)}if(onProg)onProg(read/file.size)}
+    if(done){buf+=dec.decode();if(buf.trim())await onLine(buf);break}}}
+async function isFullJson(f){if(!/\.json$/i.test(f.name))return false;try{return (await f.slice(0,200).text()).includes('"tablero":"'+FULL_TAG+'"')}catch(e){return false}}
+async function importFullJson(f,log){
+  const acc={};let head=null;
+  await readLines(f,async l=>{const o=JSON.parse(l);if(o.tablero===FULL_TAG){head=o;return}const rows=fromCols(o.d);
+    if(o.k==='rom'){const a=acc.rom||(acc.rom={routes:[],stops:[]});for(const r of rows)a[o.sub].push(r)}else{const a=acc[o.k]||(acc[o.k]=[]);for(const r of rows)a.push(r)}},p=>busy(true,`Leyendo base completa ${Math.round(p*100)}%…`));
+  if(!head)throw new Error('no es una base completa del tablero');
+  let n=0;for(const b of BASES){const rows=acc[b.k];if(!rows)continue;busy(true,`Cargando ${b.n}…`);await new Promise(r=>setTimeout(r,10));
+    const st=await saveBase(b.k,rows,f.name,[]);n++;log.push(`✓ ${b.n}: ${STORE[b.k].n.toLocaleString('es-AR')} filas${st.rep.length?' · reemplazó '+st.rep.map(mLbl).join(', '):''}${st.dup?' · '+st.dup+' duplicadas descartadas':''}`)}
+  return n;
+}
+$('#btnFull').onclick=exportFullJson;$('#btnTiempos').onclick=exportTiemposXlsx;
 
 /* =================================================================
    COPY / METAS / NAV
