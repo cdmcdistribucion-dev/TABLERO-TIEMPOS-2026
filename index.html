@@ -803,10 +803,10 @@ function readBook(buf,name,want){
   var isCsv=/\.(csv|txt)$/i.test(name);var wb;
   if(isCsv){var txt=new TextDecoder('utf-8').decode(buf);if(txt.indexOf('\uFFFD')>=0)txt=new TextDecoder('windows-1252').decode(buf);wb=XLSX.read(txt,{type:'string',raw:true});}
   else{
-    var names=XLSX.read(buf,{type:'array',bookSheets:true}).SheetNames;var full=names.indexOf('TABLERO_INFO')>=0;
+    var names=XLSX.read(buf,{type:'array',bookSheets:true}).SheetNames;var full=names.indexOf('TABLERO_INFO')>=0;if(names.indexOf('TIEMPOS_INFO')>=0){if(names.indexOf('_DATOS')<0)return[{name:'TIEMPOS_INFO',aoa:[]}];full=true;}
     var re=new RegExp(want,'i');var pick=names.filter(function(n){return re.test(n)});
     if(!pick.length)pick=names;
-    if(full)pick=names.filter(function(n){return n==='TABLERO_INFO'||n.indexOf('_B_')===0});
+    if(full)pick=names.filter(function(n){return n==='TABLERO_INFO'||n==='TIEMPOS_INFO'||n==='_DATOS'||n.indexOf('_B_')===0});
     wb=XLSX.read(buf,{type:'array',dense:true,cellFormula:false,cellHTML:false,cellText:false,cellStyles:false,sheetRows:full?0:150000,sheets:pick});
   }
   var out=[];wb.SheetNames.forEach(function(sn){var ws=wb.Sheets[sn];if(!ws)return;
@@ -847,6 +847,10 @@ async function ingest(files,forceKey){
       else sheets=await readFile(f);
     }catch(e){console.error(e);log.push(`✗ ${f.name}: no se pudo leer`);continue}
     busy(true,`Procesando ${f.name}…`);await new Promise(r=>setTimeout(r,20));
+    const DT=sheets.find(x=>x.name==='_DATOS');
+    if(DT){try{log.push(`Base completa (Excel de tiempos): ${f.name}`);const lines=[];let cur='';for(let i=1;i<DT.aoa.length;i++){const r=DT.aoa[i];if(!r)continue;cur+=String(r[0]??'');if(+r[1]===1){lines.push(cur);cur=''}}if(cur)lines.push(cur);
+      const nb=await importFullLines(lines,f.name,log);if(!nb)log.push(`✗ ${f.name}: no tiene bases para cargar`)}catch(e){console.error(e);log.push(`✗ ${f.name}: ${e.message||'no se pudo leer'}`)}continue}
+    if(sheets.some(x=>x.name==='TIEMPOS_INFO')){log.push(`✗ ${f.name}: este Excel de tiempos es de una versión anterior y no trae los datos. Descargalo de nuevo desde el tablero original.`);continue}
     if(sheets.some(x=>x.name===FULL_SHEET)){log.push(`Base completa: ${f.name}`);const nb=await importFull(sheets,f.name,log);if(!nb)log.push(`✗ ${f.name}: no tiene bases para cargar`);continue}
     let used=0;
     for(const sh of sheets){
@@ -2110,16 +2114,20 @@ async function importFull(sheets,fname,log){
 const FULL_TAG='tiempos-cdmc';
 function colEnc(a){const f=[...new Set(a.flatMap(r=>Object.keys(r)))];return{fields:f,cols:f.map(x=>{const c=a.map(r=>r[x]===undefined?null:r[x]);
   const strs=c.filter(v=>typeof v==='string');if(strs.length>c.length*.5&&c.every(v=>v===null||typeof v==='string')){const u=[...new Set(strs)];if(u.length<c.length*.4){const ix=new Map(u.map((v,j)=>[v,j]));return{d:u,i:c.map(v=>v===null?-1:ix.get(v))}}}return c})}}
+async function fullParts(){
+  const parts=[];const head={tablero:FULL_TAG,v:1,fecha:new Date().toISOString(),bases:{}};
+  BASES.forEach(b=>{const S=STORE[b.k];if(S)head.bases[b.k]={n:S.n,from:S.from,to:S.to,files:S.files}});
+  parts.push(JSON.stringify(head)+'\n');const CH=50000;
+  for(const b of BASES){const S=STORE[b.k];if(!S)continue;busy(true,`Armando la base completa… ${b.n}`);await new Promise(r=>setTimeout(r,10));
+    const lists=b.k==='rom'?[['routes',S.rows.routes],['stops',S.rows.stops]]:[['rows',S.rows]];
+    for(const [sub,arr] of lists)for(let i=0;i<arr.length||i===0;i+=CH){parts.push(JSON.stringify({k:b.k,sub,d:colEnc(arr.slice(i,i+CH))})+'\n');if(!arr.length)break}}
+  return parts;
+}
 async function exportFullJson(){
   if(!BASES.some(b=>STORE[b.k])){toast('No hay bases cargadas para descargar');return}
   busy(true,'Armando la base completa…');await new Promise(r=>setTimeout(r,30));
   try{
-    const parts=[];const head={tablero:FULL_TAG,v:1,fecha:new Date().toISOString(),bases:{}};
-    BASES.forEach(b=>{const S=STORE[b.k];if(S)head.bases[b.k]={n:S.n,from:S.from,to:S.to,files:S.files}});
-    parts.push(JSON.stringify(head)+'\n');const CH=50000;
-    for(const b of BASES){const S=STORE[b.k];if(!S)continue;busy(true,`Armando la base completa… ${b.n}`);await new Promise(r=>setTimeout(r,10));
-      const lists=b.k==='rom'?[['routes',S.rows.routes],['stops',S.rows.stops]]:[['rows',S.rows]];
-      for(const [sub,arr] of lists)for(let i=0;i<arr.length||i===0;i+=CH){parts.push(JSON.stringify({k:b.k,sub,d:colEnc(arr.slice(i,i+CH))})+'\n');if(!arr.length)break}}
+    const parts=await fullParts();
     const blob=new Blob(parts,{type:'application/json'});busy(false);
     const d=new Date();await saveFile(`Base_completa_tiempos_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`,blob);
   }catch(e){busy(false);console.error(e);toast('No se pudo generar la base completa: '+(e&&e.message||e))}
@@ -2128,9 +2136,13 @@ async function exportTiemposXlsx(){
   if(!REC.length&&!RREC.length&&!PREC.length&&!JREC.length){toast('No hay tiempos calculados para descargar');return}
   busy(true,'Armando el Excel de tiempos…');await new Promise(r=>setTimeout(r,30));
   try{const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Tiempos calculados · Tablero de Control de Tiempos'],['Generado el',new Date().toLocaleString('es-AR')],[],['Este archivo se puede consultar en Excel y también subir en otra copia del tablero (Cargar bases): trae todos los datos para armar todas las pestañas. No borres ni edites la hoja oculta _DATOS.']]),'TIEMPOS_INFO');
     const add=(name,cols,rows)=>{if(!rows.length)return;const aoa=[cols.map(c=>c[0])];rows.forEach(r=>aoa.push(cols.map(c=>c[1](r))));XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),name)};
     add('PRE RUTA',BCOLS,REC);add('EN RUTA',RCOLS,RREC);add('POST RUTA',PCOLS,PREC);add('JORNADA',JCOLS,JREC);
     add('KM PLAN VS REAL',[['Fecha',x=>fmtD(x.f)],['Patente',x=>x.pat],['OL',x=>x.ol],['Planillas',x=>x.n],['Km planificados',x=>x.plan!=null?Math.round(x.plan*10)/10:''],['Km reales (Geotab)',x=>x.real??'']],KM);
+    if(BASES.some(b=>STORE[b.k])){const parts=await fullParts();busy(true,'Armando el Excel de tiempos… datos para otra copia');await new Promise(r=>setTimeout(r,10));
+      const aoa=[['datos','']];const C=30000;for(const ln of parts){const t=ln.replace(/\n$/,'');for(let i=0;i<t.length;i+=C)aoa.push([t.slice(i,i+C),i+C>=t.length?1:0])}
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),'_DATOS');wb.Workbook={Sheets:wb.SheetNames.map(n=>({Hidden:n==='_DATOS'?1:0}))}}
     const buf=XLSX.write(wb,{type:'array',bookType:'xlsx',compression:true});busy(false);
     const d=new Date();await saveFile(`Tiempos_calculados_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.xlsx`,new Blob([buf]));
   }catch(e){busy(false);console.error(e);toast('No se pudo generar el Excel: '+(e&&e.message||e))}
@@ -2143,13 +2155,14 @@ async function readLines(file,onLine,onProg){const rd=file.stream().getReader();
   for(;;){const{done,value}=await rd.read();if(value){read+=value.length;buf+=dec.decode(value,{stream:true});let nl;while((nl=buf.indexOf('\n'))>=0){const l=buf.slice(0,nl);buf=buf.slice(nl+1);if(l.trim())await onLine(l)}if(onProg)onProg(read/file.size)}
     if(done){buf+=dec.decode();if(buf.trim())await onLine(buf);break}}}
 async function isFullJson(f){if(!/\.json$/i.test(f.name))return false;try{return (await f.slice(0,200).text()).includes('"tablero":"'+FULL_TAG+'"')}catch(e){return false}}
-async function importFullJson(f,log){
+async function importFullJson(f,log){const lines=[];await readLines(f,async l=>{lines.push(l)},p=>busy(true,`Leyendo base completa ${Math.round(p*100)}%…`));return importFullLines(lines,f.name,log)}
+async function importFullLines(lines,fname,log){
   const acc={};let head=null;
-  await readLines(f,async l=>{const o=JSON.parse(l);if(o.tablero===FULL_TAG){head=o;return}const rows=fromCols(o.d);
-    if(o.k==='rom'){const a=acc.rom||(acc.rom={routes:[],stops:[]});for(const r of rows)a[o.sub].push(r)}else{const a=acc[o.k]||(acc[o.k]=[]);for(const r of rows)a.push(r)}},p=>busy(true,`Leyendo base completa ${Math.round(p*100)}%…`));
+  for(const l of lines)await (async l=>{const o=JSON.parse(l);if(o.tablero===FULL_TAG){head=o;return}const rows=fromCols(o.d);
+    if(o.k==='rom'){const a=acc.rom||(acc.rom={routes:[],stops:[]});for(const r of rows)a[o.sub].push(r)}else{const a=acc[o.k]||(acc[o.k]=[]);for(const r of rows)a.push(r)}})(l);
   if(!head)throw new Error('no es una base completa del tablero');
   let n=0;for(const b of BASES){const rows=acc[b.k];if(!rows)continue;busy(true,`Cargando ${b.n}…`);await new Promise(r=>setTimeout(r,10));
-    const st=await saveBase(b.k,rows,f.name,[]);n++;log.push(`✓ ${b.n}: ${STORE[b.k].n.toLocaleString('es-AR')} filas${st.rep.length?' · reemplazó '+st.rep.map(mLbl).join(', '):''}${st.dup?' · '+st.dup+' duplicadas descartadas':''}`)}
+    const st=await saveBase(b.k,rows,fname,[]);n++;log.push(`✓ ${b.n}: ${STORE[b.k].n.toLocaleString('es-AR')} filas${st.rep.length?' · reemplazó '+st.rep.map(mLbl).join(', '):''}${st.dup?' · '+st.dup+' duplicadas descartadas':''}`)}
   return n;
 }
 $('#btnFull').onclick=exportFullJson;$('#btnTiempos').onclick=exportTiemposXlsx;
