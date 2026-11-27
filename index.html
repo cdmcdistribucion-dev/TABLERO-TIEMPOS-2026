@@ -2231,9 +2231,9 @@ $('#btnFull').onclick=exportFullJson;$('#btnTiempos').onclick=exportTiemposXlsx;
 /* =================================================================
    GOOGLE SHEETS (planilla publicada en la web)
 ================================================================= */
-const GS_DEF=''; // enlace fijo opcional: si se completa, el tablero lo usa en cualquier navegador
+const GS_DEF=COPIA?'https://docs.google.com/spreadsheets/d/e/2PACX-1vTz_cq-qsOiXWx9af75MVWYsIPOC6VH51zBnzc3oWgr3cCRtp40rKcTZULB-FDlaIkXPRBZfPXEy1XY/pubhtml':''; // enlace fijo opcional: si se completa, el tablero lo usa en cualquier navegador
 const GS_K='tt_gs'+NS;
-const gsGet=()=>{try{const o=JSON.parse(localStorage.getItem(GS_K)||'null');if(o&&o.url!=null)return o}catch(e){}return{url:GS_DEF}};
+const gsGet=()=>{let o=null;try{o=JSON.parse(localStorage.getItem(GS_K)||'null')}catch(e){}if(o&&(o.url||o.off))return o;return Object.assign({},o||{},{url:GS_DEF})};
 const gsSet=o=>{try{localStorage.setItem(GS_K,JSON.stringify(o))}catch(e){}};
 function gsNorm(u){u=(u||'').trim();if(!u)return'';let url;try{url=new URL(u)}catch(e){return''}
   let m=u.match(/docs\.google\.com\/spreadsheets\/d\/e\/([^/?#]+)/);
@@ -2277,7 +2277,7 @@ async function gsSync(force){
   gsBusy=false}
 $('#gsSave').onclick=()=>{const u=$('#gsUrl').value.trim();if(!gsNorm(u)){toast('Pegá el enlace de "Publicar en la web"');return}gsSet({url:u});gsSync(true)};
 $('#gsNow').onclick=()=>{if(!gsGet().url){toast('Primero guardá el enlace');return}gsSync(true)};
-$('#gsOff').onclick=()=>{gsSet({url:''});gsShow();toast('Enlace quitado')};
+$('#gsOff').onclick=()=>{gsSet({url:'',off:1});gsShow();toast('Enlace quitado')};
 async function exportSheetsXlsx(){
   if(!BASES.some(b=>STORE[b.k])){toast('No hay bases cargadas para descargar');return}
   busy(true,'Armando la base para Google Sheets…');await new Promise(r=>setTimeout(r,30));
