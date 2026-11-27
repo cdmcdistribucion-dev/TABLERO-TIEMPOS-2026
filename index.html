@@ -2048,9 +2048,9 @@ document.addEventListener('click',()=>$$('.mpp.on').forEach(p=>p.classList.remov
 /* =================================================================
    JORNADA LABORAL
 ================================================================= */
-let JREC=[],JQ={};const JF={desde:'',hasta:'',ol:'',solo:'1',months:new Set()};
+let JREC=[],JQ={},JLONG=[];const JF={desde:'',hasta:'',ol:'',solo:'1',months:new Set()};
 function buildJor(){
-  JREC=[];JQ={};if(!STORE.molE||!STORE.molS)return;
+  JREC=[];JQ={};JLONG=[];if(!STORE.molE||!STORE.molS)return;
   const info=new Map(),plDay=new Map();(STORE.salida?.rows||[]).forEach(s=>{if(!s.dni)return;const o=info.get(s.dni);if(!o||s.f>o.f)info.set(s.dni,{ch:s.ch,ol:OLSIG(s.ol),f:s.f});const k=s.dni+'|'+s.f;plDay.set(k,(plDay.get(k)||0)+1)});
   const E=new Map(),S=new Map(),IM=new Set();STORE.molE.rows.forEach(r=>{(E.get(r.d)||E.set(r.d,[]).get(r.d)).push(r.t);if(r.im)IM.add('E'+r.d+'|'+r.t)});STORE.molS.rows.forEach(r=>{(S.get(r.d)||S.set(r.d,[]).get(r.d)).push(r.t);if(r.im)IM.add('S'+r.d+'|'+r.t)});
   let noSal=0,long=0;
@@ -2059,9 +2059,9 @@ function buildJor(){
     ings.forEach((ing,i)=>{const lim=Math.min(ing+20*3600000,ings[i+1]??Infinity);let sal=null;for(const t of so){if(t>ing&&t<lim)sal=t;if(t>=lim)break}
       const inf=info.get(d);const f=ymdT(ing);
       const R={fecha:f,dni:d,chofer:inf?.ch||('DNI '+d),ol:inf?.ol||'—',esChofer:!!inf,ing,sal,pl:plDay.get(d+'|'+f)||0,h:null,obs:[],imp:[]};if(IM.has('E'+d+'|'+ing))R.imp.push('Molinete entrada');if(sal!=null&&IM.has('S'+d+'|'+sal))R.imp.push('Molinete salida');
-      if(sal==null){R.obs.push('Sin fichada de salida');noSal++}else{const h=(sal-ing)/3600000;if(h>12){long++;return}R.h=h}
+      if(sal==null){R.obs.push('Sin fichada de salida');noSal++}else{const h=(sal-ing)/3600000;if(h>12){long++;R.h=h;JLONG.push(R);return}R.h=h}
       JREC.push(R)})}
-  JREC=JREC.filter(OL_OK);JREC.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);JQ={n:JREC.length,noSal,long,ch:JREC.filter(r=>r.esChofer).length};
+  JLONG=JLONG.filter(OL_OK);JREC=JREC.filter(OL_OK);JREC.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);JQ={n:JREC.length,noSal,long,ch:JREC.filter(r=>r.esChofer).length};
 }
 function setupJFilters(){const ds=JREC.map(r=>r.fecha).sort();const lastM=(ds[ds.length-1]||'').slice(0,7);JF.desde=ds.find(d=>d.startsWith(lastM))||ds[0]||'';JF.hasta=ds[ds.length-1]||'';$('#jDesde').value=JF.desde;$('#jHasta').value=JF.hasta;
   const ols=[...new Set(JREC.map(r=>r.ol))].filter(o=>o!=='—').sort();$('#jOl').innerHTML='<option value="">Todos</option>'+ols.map(o=>`<option value="${esc(o)}">${esc(o)}${OLN[o]?' · '+OLN[o]:''}</option>`).join('');JF.ol='';mpLast('jMes')}
@@ -2078,10 +2078,10 @@ function renderJor(){
   $('#jorEmpty').style.display='none';$('#jorBody').style.display='';
   const MX=parseFloat($('#jMax').value)||8;const J=JREC.filter(jOk),H=J.filter(r=>r.h!=null);const over=H.filter(r=>r.h>MX);
   const red=h=>h!=null&&h>MX?`<b style="color:var(--crit)">${hh(h)}</b>`:hh(h);
-  const mx=H.reduce((a,r)=>!a||r.h>a.h?r:a,null);
+  const L12=JLONG.filter(jOk);
   $('#jKpis').innerHTML=`<div class="kpi"><div class="l">Jornadas</div><div class="v">${r0(J.length)}</div><div class="s">${H.length} completas · ${new Set(J.map(r=>r.dni)).size} personas</div></div>
-   <div class="kpi"><div class="l">Jornada</div><div class="v" style="${mean(H.map(r=>r.h))>MX?'color:var(--crit)':''}">${hh(mean(H.map(r=>r.h)))}<small>h</small></div><div class="s">mediana ${hh(median(H.map(r=>r.h)))} h</div></div>
-   <div class="kpi"><div class="l">Jornada máxima</div><div class="v" style="${mx&&mx.h>MX?'color:var(--crit)':''}">${hh(mx?.h)}<small>h</small></div><div class="s">${mx?esc(mx.chofer)+' · '+fmtD(mx.fecha):''}</div></div>
+   <div class="kpi"><div class="l">Jornada</div><div class="v" style="${mean(H.map(r=>r.h))>MX?'color:var(--crit)':''}">${hh(mean(H.map(r=>r.h)))}<small>h</small></div><div class="s"></div></div>
+   <div class="kpi"><div class="l">Jornadas de más de 12 h</div><div class="v" style="${L12.length?'color:var(--crit)':''}">${r0(L12.length)}</div><div class="s">eliminadas de la base · ${new Set(L12.map(r=>r.dni)).size} personas</div></div>
    <div class="kpi"><div class="l">Jornadas de más de ${MX} h</div><div class="v" style="color:var(--crit)">${pct(H.length?over.length/H.length:null)}</div><div class="s">${over.length} jornadas</div></div>
    <div class="kpi"><div class="l">Personas con jornadas de más de ${MX} h</div><div class="v">${r0(new Set(over.map(r=>r.dni)).size)}</div><div class="s">de ${new Set(H.map(r=>r.dni)).size}</div></div>
    <div class="kpi"><div class="l">Ingreso / salida</div><div class="split"><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.ing);return d.getHours()*60+d.getMinutes()})))}<span>ingreso</span></div><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.sal);return d.getHours()*60+d.getMinutes()})))}<span>salida</span></div></div></div>`;
