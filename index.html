@@ -188,6 +188,21 @@ body.locked header.top,body.locked main{visibility:hidden}
       <span class="muted" id="procMsg"></span>
     </div>
   </div>
+  <div class="card" id="gsCard">
+    <h2>Base en Google Sheets</h2>
+    <p class="hint">El tablero puede leer la base desde una planilla de Google Sheets <b>publicada en la web</b>. Una vez guardado el enlace, cada vez que abrís el tablero trae la última versión de la planilla (si no cambió, usa lo que ya tiene guardado). La planilla reemplaza todas las bases cargadas en este navegador. Ojo: con "Publicar en la web" cualquiera que tenga el enlace puede ver los datos.</p>
+    <div class="row"><input id="gsUrl" type="url" placeholder="Pegá el enlace de Archivo → Compartir → Publicar en la web" style="flex:1;min-width:300px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit">
+      <button class="btn primary" id="gsSave">Guardar y cargar</button><button class="btn" id="gsNow">Actualizar ahora</button><button class="btn" id="gsOff">Quitar enlace</button></div>
+    <div class="muted" id="gsMsg" style="margin-top:8px;font-size:13px"></div>
+    <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:600;font-size:13.5px">Cómo preparar la planilla</summary>
+      <ol style="font-size:13px;line-height:1.6;margin:8px 0 0 18px">
+        <li>Tocá <b>⬇ Descargar base para Google Sheets</b> (abajo). También sirve el Excel de tiempos calculados si mostrás la hoja oculta <code>_DATOS</code>.</li>
+        <li>Subilo a Google Drive y abrilo con Google Sheets (Archivo → Guardar como hoja de cálculo de Google).</li>
+        <li>En Sheets: <b>Archivo → Compartir → Publicar en la web</b>. Elegí la hoja <code>_DATOS</code>, formato <b>Valores separados por comas (.csv)</b>, y tocá Publicar. Dejá tildado "Volver a publicar automáticamente cuando se hagan cambios".</li>
+        <li>Copiá el enlace, pegalo arriba y tocá <b>Guardar y cargar</b>.</li>
+        <li>Para actualizar la base, reemplazá el contenido de la hoja <code>_DATOS</code> con el de una descarga nueva. Google puede tardar unos minutos en publicar los cambios.</li></ol></details>
+    <div class="row" style="margin-top:10px"><button class="btn" id="btnGs">⬇ Descargar base para Google Sheets</button></div>
+  </div>
   <details class="card" id="diag">
     <summary style="cursor:pointer;font-weight:600;font-size:15px">🔎 Diagnóstico de bases <span class="muted" style="font-weight:400;font-size:12.5px">— qué meses y días están cargados, qué no cruza y calidad de datos (clic para mostrar u ocultar)</span></summary>
     <div class="row" style="margin:14px 0 6px"><span class="muted" style="font-size:12.5px">Mes a analizar</span><select id="dMes"></select><button class="btn sm" data-copy="tblDPat">Copiar patentes</button></div>
@@ -860,7 +875,7 @@ async function ingest(files,forceKey){
       else sheets=await readFile(f);
     }catch(e){console.error(e);log.push(`✗ ${f.name}: no se pudo leer`);continue}
     busy(true,`Procesando ${f.name}…`);await new Promise(r=>setTimeout(r,20));
-    const DT=sheets.find(x=>x.name==='_DATOS');
+    const DT=sheets.find(x=>x.name==='_DATOS')||(sheets.length===1&&String(sheets[0].aoa[0]?.[0]??'').trim()==='datos'?sheets[0]:null);
     if(DT){try{log.push(`Base completa (Excel de tiempos): ${f.name}`);const lines=[];let cur='';for(let i=1;i<DT.aoa.length;i++){const r=DT.aoa[i];if(!r)continue;cur+=String(r[0]??'');if(+r[1]===1){lines.push(cur);cur=''}}if(cur)lines.push(cur);
       const nb=await importFullLines(lines,f.name,log);if(!nb)log.push(`✗ ${f.name}: no tiene bases para cargar`)}catch(e){console.error(e);log.push(`✗ ${f.name}: ${e.message||'no se pudo leer'}`)}continue}
     if(sheets.some(x=>x.name==='TIEMPOS_INFO')){log.push(`✗ ${f.name}: este Excel de tiempos es de una versión anterior y no trae los datos. Descargalo de nuevo desde el tablero original.`);continue}
@@ -2197,6 +2212,67 @@ async function importFullLines(lines,fname,log){
 $('#btnFull').onclick=exportFullJson;$('#btnTiempos').onclick=exportTiemposXlsx;
 
 /* =================================================================
+   GOOGLE SHEETS (planilla publicada en la web)
+================================================================= */
+const GS_DEF=''; // enlace fijo opcional: si se completa, el tablero lo usa en cualquier navegador
+const GS_K='tt_gs'+NS;
+const gsGet=()=>{try{const o=JSON.parse(localStorage.getItem(GS_K)||'null');if(o&&o.url!=null)return o}catch(e){}return{url:GS_DEF}};
+const gsSet=o=>{try{localStorage.setItem(GS_K,JSON.stringify(o))}catch(e){}};
+function gsNorm(u){u=(u||'').trim();if(!u)return'';let url;try{url=new URL(u)}catch(e){return''}
+  let m=u.match(/docs\.google\.com\/spreadsheets\/d\/e\/([^/?#]+)/);
+  if(m){const gid=url.searchParams.get('gid');const out=url.searchParams.get('output');
+    if(gid)return `https://docs.google.com/spreadsheets/d/e/${m[1]}/pub?gid=${gid}&single=true&output=csv`;
+    if(out==='csv')return `https://docs.google.com/spreadsheets/d/e/${m[1]}/pub?output=csv`;
+    return `https://docs.google.com/spreadsheets/d/e/${m[1]}/pub?output=xlsx`}
+  m=u.match(/docs\.google\.com\/spreadsheets\/d\/([^/?#]+)/);
+  if(m){const gid=url.searchParams.get('gid')||(url.hash.match(/gid=(\d+)/)||[])[1];return `https://docs.google.com/spreadsheets/d/${m[1]}/export?format=${gid?'csv&gid='+gid:'xlsx'}`}
+  return u}
+function csvDatos(text){const L=text.split(/\r?\n/);const out=[];let cur='';
+  for(let i=0;i<L.length;i++){const l=L[i];if(!l)continue;const k=l.lastIndexOf(',');let a=k<0?l:l.slice(0,k),b=k<0?'':l.slice(k+1).trim().replace(/"/g,'');
+    if(a.length>1&&a[0]==='"'&&a[a.length-1]==='"')a=a.slice(1,-1).replace(/""/g,'"');
+    if(i===0&&a.trim()==='datos')continue;cur+=a;if(b==='1'){out.push(cur);cur=''}}
+  if(cur)out.push(cur);return out}
+function hashLines(lines){let h=2166136261,n=0;for(const l of lines){n+=l.length;for(let i=0;i<l.length;i+=7){h^=l.charCodeAt(i);h=Math.imul(h,16777619)}}return(h>>>0).toString(36)+'.'+n}
+function gsShow(extra){const g=gsGet();$('#gsUrl').value=g.url||'';
+  $('#gsMsg').innerHTML=(extra?extra+'<br>':'')+(g.url?`Enlace guardado${g.at?` · última actualización desde Sheets: <b>${new Date(g.at).toLocaleString('es-AR')}</b>`:' · todavía no se cargó'}`:'Sin enlace de Google Sheets: el tablero usa las bases cargadas a mano.')}
+let gsBusy=false;
+async function gsSync(force){
+  const g=gsGet();if(!g.url||gsBusy)return;const url=gsNorm(g.url);if(!url){gsShow('✗ El enlace no es válido.');return}
+  gsBusy=true;busy(true,'Leyendo la base desde Google Sheets…');
+  try{
+    const r=await fetch(url,{cache:'no-store',redirect:'follow'});if(!r.ok)throw new Error('Google respondió '+r.status+(r.status===404||r.status===400?' (¿la planilla está publicada?)':''));
+    const ct=r.headers.get('content-type')||'';let lines;
+    if(/csv|text\/plain/.test(ct)){busy(true,'Leyendo la base desde Google Sheets… (descargando)');lines=csvDatos(await r.text())}
+    else if(/html/.test(ct))throw new Error('el enlace abre una página y no los datos: publicá la hoja _DATOS como .csv');
+    else{const buf=await r.arrayBuffer();busy(true,'Leyendo la base desde Google Sheets… (abriendo planilla)');const sheets=await readFile(new File([buf],'Google Sheets.xlsx'));
+      const DT=sheets.find(x=>x.name==='_DATOS');if(!DT)throw new Error('la planilla no tiene la hoja _DATOS');lines=[];let cur='';
+      for(let i=1;i<DT.aoa.length;i++){const x=DT.aoa[i];if(!x)continue;cur+=String(x[0]??'');if(+x[1]===1){lines.push(cur);cur=''}}if(cur)lines.push(cur)}
+    if(!lines.length||!lines[0].includes('"tablero":"'+FULL_TAG+'"'))throw new Error('la hoja publicada no es la hoja _DATOS de una base del tablero');
+    const sig=hashLines(lines);const have=BASES.some(b=>STORE[b.k]);
+    if(!force&&have&&g.sig===sig){busy(false);gsShow('✓ La planilla no cambió: se usan los datos ya guardados.');gsBusy=false;return}
+    for(const b of BASES){delete STORE[b.k];await idb.del(b.k)}
+    const log=['Base desde Google Sheets'];const nb=await importFullLines(lines,'Google Sheets',log);
+    if(!nb)throw new Error('la planilla no trae bases para cargar');
+    gsSet(Object.assign(gsGet(),{sig,at:Date.now()}));busy(false);renderBases();$('#procMsg').innerHTML=log.map(esc).join('<br>');LASTLOG=log;
+    gsShow('✓ Base actualizada desde Google Sheets.');buildAndShow(false);
+  }catch(e){console.error(e);busy(false);const msg=e&&e.message||String(e);
+    gsShow('✗ No se pudo leer la planilla: '+esc(/Failed to fetch|NetworkError|Load failed/i.test(msg)?'no hubo conexión con Google o la planilla no está publicada en la web':msg)+'. Se siguen usando las bases guardadas en este navegador.');toast('No se pudo leer Google Sheets')}
+  gsBusy=false}
+$('#gsSave').onclick=()=>{const u=$('#gsUrl').value.trim();if(!gsNorm(u)){toast('Pegá el enlace de "Publicar en la web"');return}gsSet({url:u});gsSync(true)};
+$('#gsNow').onclick=()=>{if(!gsGet().url){toast('Primero guardá el enlace');return}gsSync(true)};
+$('#gsOff').onclick=()=>{gsSet({url:''});gsShow();toast('Enlace quitado')};
+async function exportSheetsXlsx(){
+  if(!BASES.some(b=>STORE[b.k])){toast('No hay bases cargadas para descargar');return}
+  busy(true,'Armando la base para Google Sheets…');await new Promise(r=>setTimeout(r,30));
+  try{const parts=await fullParts();const aoa=[['datos','']];const C=30000;for(const ln of parts){const t=ln.replace(/\n$/,'');for(let i=0;i<t.length;i+=C)aoa.push([t.slice(i,i+C),i+C>=t.length?1:0])}
+    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),'_DATOS');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Base del Tablero de Control de Tiempos para Google Sheets'],['Generado el',new Date().toLocaleString('es-AR')],[],['Publicá en la web la hoja _DATOS como .csv y pegá el enlace en el tablero (Cargar bases → Base en Google Sheets). No edites la hoja _DATOS a mano.']]),'LEEME');
+    const buf=XLSX.write(wb,{type:'array',bookType:'xlsx',compression:true});busy(false);const d=new Date();
+    await saveFile(`Base_tiempos_Google_Sheets_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.xlsx`,new Blob([buf]));
+  }catch(e){busy(false);console.error(e);toast('No se pudo generar el archivo: '+(e&&e.message||e))}}
+$('#btnGs').onclick=exportSheetsXlsx;
+
+/* =================================================================
    COPY / METAS / NAV
 ================================================================= */
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-copy]');if(!b)return;let tsv;
@@ -2254,7 +2330,8 @@ async function startApp(){renderBases();const saved=await idb.all();let any=fals
   PRE.deleted=new Set(saved.__meta?.deleted||[]);
   try{await cleanStored()}catch(e){console.error(e)}
   renderBases();try{if(STORE.salida){build();setupFilters()}buildPost();setupPFilters();buildJor();setupJFilters();if(STORE.bees71){buildRuta();setupRFilters()}setupTFilters();if(any)$('#procMsg').innerHTML=`Bases cargadas${REC.length?' · Pre ruta: <b>'+REC.length+'</b> planillas':''}${RREC.length?' · En ruta: <b>'+RREC.length+'</b> planillas':''}`}catch(e){console.error(e)}
-  renderDiag();const h=location.hash.slice(1);if(['base','pre','ruta','post','arbol','jor'].includes(h))go(h)}
+  renderDiag();const h=location.hash.slice(1);if(['base','pre','ruta','post','arbol','jor'].includes(h))go(h);
+  gsShow();if(gsGet().url)setTimeout(()=>gsSync(false),300)}
 </script>
 </body>
 </html>
