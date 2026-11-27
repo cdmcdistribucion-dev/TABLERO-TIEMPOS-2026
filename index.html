@@ -281,7 +281,7 @@ body.locked header.top,body.locked main{visibility:hidden}
 
     <div class="card">
       <h2>Los cuatro escenarios: Team Room y encierro</h2>
-      <p class="hint">Tiempo pre ruta promedio (min) y cantidad de rutas de cada escenario (TR = Team Room). Usa los filtros de fecha, operador y vuelta; no los de encierro ni Team Room. Línea punteada: meta.</p>
+      <p class="hint">Tiempo pre ruta (mediana) (min) y cantidad de rutas de cada escenario (TR = Team Room). Usa los filtros de fecha, operador y vuelta; no los de encierro ni Team Room. Línea punteada: meta.</p>
       <div class="grid2" style="gap:24px">
         <div><div class="chart" id="chEsc"></div></div>
         <div><div class="muted" style="font-size:12px;margin-bottom:6px">Combinación de los dos factores</div><div id="matEsc"></div></div>
@@ -290,32 +290,32 @@ body.locked header.top,body.locked main{visibility:hidden}
 
     <div class="grid2">
       <div class="card">
-        <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Zonas del CD con mayor tiempo</h2><p class="hint" style="margin:0">Minutos promedio por ruta dentro de cada zona, entre la fichada y la salida (geocercas + checklist). Dock, carga/descarga y gatera solo cuentan en rutas sin encierro (con encierro el camión ya está cargado).</p></div>
+        <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Zonas del CD con mayor tiempo</h2><p class="hint" style="margin:0">Minutos (mediana) por ruta dentro de cada zona, entre la fichada y la salida (geocercas + checklist). Dock, carga/descarga y gatera solo cuentan en rutas sin encierro (con encierro el camión ya está cargado).</p></div>
         <div class="seg" id="radMode"><button data-v="ol" class="on">Por operador</button><button data-v="tot">Total CD</button></div></div>
         <div class="legend" id="legRad" style="margin-top:10px"></div>
         <div class="chart" id="chRad"></div>
       </div>
       <div class="card">
         <h2>Choferes que más demoran</h2>
-        <p class="hint">Tiempo pre ruta promedio por chofer (mínimo de rutas según el filtro del ranking). Línea punteada: meta.</p>
+        <p class="hint">Tiempo pre ruta (mediana) por chofer (mínimo de rutas según el filtro del ranking). Línea punteada: meta.</p>
         <div class="chart" id="chTopCh"></div>
       </div>
     </div>
 
     <div class="grid2">
-      <div class="card"><h2>Sin encierro: ¿dónde se va el tiempo?</h2><p class="hint">Minutos promedio de cada tramo por operador (rutas con todos los tramos registrados).</p><div class="legend" id="legSin"></div><div class="chart" id="chSin"></div></div>
-      <div class="card"><h2>Con encierro: ¿dónde se va el tiempo?</h2><p class="hint">Minutos promedio de cada tramo por operador.</p><div class="legend" id="legCon"></div><div class="chart" id="chCon"></div></div>
+      <div class="card"><h2>Sin encierro: ¿dónde se va el tiempo?</h2><p class="hint">Minutos (mediana) de cada tramo por operador (rutas con todos los tramos registrados).</p><div class="legend" id="legSin"></div><div class="chart" id="chSin"></div></div>
+      <div class="card"><h2>Con encierro: ¿dónde se va el tiempo?</h2><p class="hint">Minutos (mediana) de cada tramo por operador.</p><div class="legend" id="legCon"></div><div class="chart" id="chCon"></div></div>
     </div>
 
     <div class="grid2">
-      <div class="card"><h2>Pre ruta por operador</h2><p class="hint">Tiempo total promedio, fichada → salida (min). Punteado: metas.</p>
+      <div class="card"><h2>Pre ruta por operador</h2><p class="hint">Tiempo total (mediana), fichada → salida (min). Punteado: metas.</p>
         <div class="legend"><span><i style="background:var(--enc-con)"></i>Con encierro</span><span><i style="background:var(--enc-sin)"></i>Sin encierro</span></div><div class="chart" id="chOl"></div></div>
       <div class="card"><h2>Distribución del tiempo pre ruta</h2><p class="hint">Rutas por rango de minutos.</p>
         <div class="legend"><span><i style="background:var(--enc-con)"></i>Con encierro</span><span><i style="background:var(--enc-sin)"></i>Sin encierro</span></div><div class="chart" id="chHist"></div></div>
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Desglose por día</h2><p class="hint" style="margin:0">Tiempo pre ruta promedio por día. Línea punteada: meta.</p></div>
+      <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Desglose por día</h2><p class="hint" style="margin:0">Tiempo pre ruta (mediana) por día. Línea punteada: meta.</p></div>
       <div class="seg" id="dayMode"><button data-v="tot" class="on">Total</button><button data-v="enc">Con / sin encierro</button><button data-v="ol">Por operador</button></div></div>
       <div class="legend" id="legDay" style="margin-top:10px"></div><div class="chart" id="chDay"></div>
       <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn sm" data-copy="tblDay">Copiar tabla</button></div>
@@ -324,13 +324,13 @@ body.locked header.top,body.locked main{visibility:hidden}
 
     <div class="card">
       <div class="row" style="justify-content:space-between"><div><h2>Choferes más desviados</h2>
-      <p class="hint" style="margin:0">Desvío = minutos promedio por encima de la meta de 30′ (una ruta por debajo cuenta 0). “Dónde pierde más” = tramo con mayor exceso sobre su meta de tramo.</p></div>
-      <div class="row"><select id="rankBy"><option value="tot">Ordenar por tiempo promedio</option><option value="exc">Ordenar por desvío sobre meta</option></select><select id="minR"><option value="1">≥1 ruta</option><option value="5" selected>≥5 rutas</option><option value="10">≥10 rutas</option></select><select id="topN"><option value="15">Top 15</option><option value="30">Top 30</option><option value="9999">Todos</option></select><input type="search" id="qChofer" placeholder="Buscar chofer…"><button class="btn sm" data-copy="tblRank">Copiar tabla</button></div></div>
+      <p class="hint" style="margin:0">Desvío = mediana de minutos por encima de la meta de 30′ (una ruta por debajo cuenta 0). “Dónde pierde más” = tramo con mayor exceso sobre su meta de tramo.</p></div>
+      <div class="row"><select id="rankBy"><option value="tot">Ordenar por tiempo (mediana)</option><option value="exc">Ordenar por desvío sobre meta</option></select><select id="minR"><option value="1">≥1 ruta</option><option value="5" selected>≥5 rutas</option><option value="10">≥10 rutas</option></select><select id="topN"><option value="15">Top 15</option><option value="30">Top 30</option><option value="9999">Todos</option></select><input type="search" id="qChofer" placeholder="Buscar chofer…"><button class="btn sm" data-copy="tblRank">Copiar tabla</button></div></div>
       <div class="tblwrap" style="margin-top:12px"><table class="data" id="tblRank"></table></div>
     </div>
 
     <div class="card"><h2>¿En qué tramo demora cada chofer?</h2>
-      <p class="hint">Minutos de diferencia entre el promedio del chofer y el del CD en cada tramo. <b style="color:var(--div-pos)">Rojo</b> = más lento · <b style="color:var(--div-neg)">azul</b> = más rápido. Mismos choferes del ranking.</p>
+      <p class="hint">Minutos de diferencia entre la mediana del chofer y la del CD en cada tramo. <b style="color:var(--div-pos)">Rojo</b> = más lento · <b style="color:var(--div-neg)">azul</b> = más rápido. Mismos choferes del ranking.</p>
       <div class="chart" id="chHeat"></div></div>
 
     <div class="card">
@@ -358,7 +358,7 @@ body.locked header.top,body.locked main{visibility:hidden}
 
     <div class="card">
       <h2>¿Cómo se compone el tiempo en ruta?</h2>
-      <p class="hint">Minutos promedio por planilla, desde la salida del CD hasta el regreso a portería. La atención es la suma del tiempo de visita de todos los clientes de la planilla.</p>
+      <p class="hint">Minutos (mediana) por planilla, desde la salida del CD hasta el regreso a portería. La atención es la suma del tiempo de visita de todos los clientes de la planilla.</p>
       <div class="legend" id="legRuta"></div><div class="chart" id="chRutaComp"></div>
     </div>
 
@@ -376,7 +376,7 @@ body.locked header.top,body.locked main{visibility:hidden}
       <p class="hint" id="kmHint">Km planificados en el romaneio (suma de las rutas de la patente en el día) contra km recorridos según Geotab, cruzados por patente y fecha. No aplica el filtro de segmento.</p>
       <div class="kpis" id="kmKpis" style="grid-template-columns:repeat(5,1fr)"></div>
       <div class="grid2" style="gap:24px">
-        <div><div class="muted" style="font-size:12px;margin-bottom:4px">Km promedio por patente y día, por operador</div>
+        <div><div class="muted" style="font-size:12px;margin-bottom:4px">Km (mediana) por patente y día, por operador</div>
           <div class="legend"><span><i style="background:var(--plan)"></i>Planificado (romaneio)</span><span><i style="background:var(--real)"></i>Real (Geotab)</span></div><div class="chart" id="chKmOl"></div></div>
         <div><div class="muted" style="font-size:12px;margin-bottom:4px">Cada punto es una patente en un día · línea punteada = real igual al plan</div>
           <div class="legend" id="legKmSc"></div><div class="chart" id="chKmSc"></div></div>
@@ -401,8 +401,8 @@ body.locked header.top,body.locked main{visibility:hidden}
       <h2>Tiempo de atención a clientes</h2>
       <p class="hint">Tiempo de visita (de inicio a fin de la visita en BEES).</p>
       <div class="grid2" style="gap:24px">
-        <div><div class="muted" style="font-size:12px;margin-bottom:4px">Choferes con mayor atención promedio por cliente (mín. 5 planillas)</div><div class="chart" id="chAtCh"></div></div>
-        <div><div class="row" style="justify-content:space-between"><div class="muted" style="font-size:12px">Clientes con mayor tiempo de atención promedio (mín. 3 visitas)</div><button class="btn sm" data-copy="tblCli">Copiar</button></div>
+        <div><div class="muted" style="font-size:12px;margin-bottom:4px">Choferes con mayor atención (mediana) por cliente (mín. 5 planillas)</div><div class="chart" id="chAtCh"></div></div>
+        <div><div class="row" style="justify-content:space-between"><div class="muted" style="font-size:12px">Clientes con mayor tiempo de atención (mediana) (mín. 3 visitas)</div><button class="btn sm" data-copy="tblCli">Copiar</button></div>
           <div class="tblwrap" style="margin-top:6px;max-height:470px"><table class="data" id="tblCli"></table></div></div>
       </div>
     </div>
@@ -424,14 +424,14 @@ body.locked header.top,body.locked main{visibility:hidden}
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content:space-between"><div><h2>Choferes: tiempos en ruta</h2><p class="hint" style="margin:0">Promedios por planilla. Ordená tocando el selector.</p></div>
+      <div class="row" style="justify-content:space-between"><div><h2>Choferes: tiempos en ruta</h2><p class="hint" style="margin:0">Medianas por planilla. Ordená tocando el selector.</p></div>
       <div class="row"><select id="rRankBy"><option value="tRuta">Ordenar por tiempo en ruta</option><option value="tDesp">por desplazamiento</option><option value="atCli">por atención por cliente</option><option value="pnpMin">por paradas no planificadas</option><option value="desvPlan">por desvío vs plan</option></select>
       <select id="rMin"><option value="1">≥1 planilla</option><option value="5" selected>≥5 planillas</option><option value="10">≥10 planillas</option></select><input type="search" id="rQ" placeholder="Buscar chofer…"><button class="btn sm" data-copy="tblRCh">Copiar</button></div></div>
       <div class="tblwrap" style="margin-top:12px"><table class="data" id="tblRCh"></table></div>
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Desglose por día</h2><p class="hint" style="margin:0">Promedio por planilla.</p></div>
+      <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Desglose por día</h2><p class="hint" style="margin:0">Mediana por planilla.</p></div>
       <div class="seg" id="rDayMode"><button data-v="ruta" class="on">Tiempo en ruta</button><button data-v="desp">Desplazamiento</button><button data-v="at">Atención</button></div></div>
       <div class="legend" id="legRDay" style="margin-top:10px"></div><div class="chart" id="chRDay"></div>
       <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn sm" data-copy="tblRDay">Copiar tabla</button></div>
@@ -461,22 +461,22 @@ body.locked header.top,body.locked main{visibility:hidden}
     <div class="kpis" id="pKpis"></div>
     <div class="card">
       <h2>Composición del tiempo interno</h2>
-      <p class="hint">Minutos promedio desde el regreso del camión (SIC) hasta la fichada de salida del chofer en el molinete. Solo choferes-día con geocercas registradas.</p>
+      <p class="hint">Minutos (mediana) desde el regreso del camión (SIC) hasta la fichada de salida del chofer en el molinete. Solo choferes-día con geocercas registradas.</p>
       <div class="legend" id="legPost"></div><div class="chart" id="chPostComp"></div>
     </div>
     <div class="card">
-      <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Evolución mensual</h2><p class="hint" style="margin:0">Minutos promedio por chofer-día.</p></div>
+      <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Evolución mensual</h2><p class="hint" style="margin:0">Minutos (mediana) por chofer-día.</p></div>
       <div class="seg" id="pMesMode"><button data-v="tr" class="on">Por tiempo</button><button data-v="ol">Tiempo interno por operador</button></div></div>
       <div class="legend" id="legPMes" style="margin-top:10px"></div><div class="chart" id="chPMes"></div>
       <div class="tblwrap" style="margin-top:12px;max-height:none"><table class="data" id="tblPMes"></table></div>
     </div>
     <div class="card">
-      <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Desglose por día</h2><p class="hint" style="margin:0">Minutos promedio por chofer-día.</p></div><button class="btn sm" data-copy="tblPDay">Copiar tabla</button></div>
+      <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Desglose por día</h2><p class="hint" style="margin:0">Minutos (mediana) por chofer-día.</p></div><button class="btn sm" data-copy="tblPDay">Copiar tabla</button></div>
       <div class="legend" id="legPDay" style="margin-top:10px"></div><div class="chart" id="chPDay"></div>
       <div class="tblwrap" style="margin-top:8px;max-height:420px"><table class="data" id="tblPDay"></table></div>
     </div>
     <div class="card">
-      <div class="row" style="justify-content:space-between"><div><h2>Choferes: tiempo interno</h2><p class="hint" style="margin:0">Promedios por chofer-día. “Dónde demora más” = tramo con mayor diferencia contra el promedio del CD.</p></div>
+      <div class="row" style="justify-content:space-between"><div><h2>Choferes: tiempo interno</h2><p class="hint" style="margin:0">Medianas por chofer-día. “Dónde demora más” = tramo con mayor diferencia contra la mediana del CD.</p></div>
       <div class="row"><select id="pRankBy"><option value="tot">Ordenar por tiempo interno</option><option value="desc">por descarga</option><option value="verif">por verificación</option><option value="ctrl">por control</option><option value="fin">por financiero</option></select>
       <select id="pMin"><option value="1">≥1 día</option><option value="3" selected>≥3 días</option><option value="10">≥10 días</option></select><input type="search" id="pQ" placeholder="Buscar chofer…"><button class="btn sm" data-copy="tblPCh">Copiar</button></div></div>
       <div class="tblwrap" style="margin-top:12px"><table class="data" id="tblPCh"></table></div>
@@ -505,7 +505,7 @@ body.locked header.top,body.locked main{visibility:hidden}
     </div>
     <div class="card">
       <h2>Árbol de tiempos</h2>
-      <p class="hint">Promedios del período. Pre ruta: primera vuelta. En ruta: atención según la fuente elegida en la pestaña En ruta. “Plan” = romaneio.</p>
+      <p class="hint">Medianas del período. Pre ruta: primera vuelta. En ruta: atención según la fuente elegida en la pestaña En ruta. “Plan” = romaneio.</p>
       <div class="chart" id="chTree"></div>
     </div>
     <div class="card">
@@ -530,17 +530,17 @@ body.locked header.top,body.locked main{visibility:hidden}
     <div class="kpis" id="jKpis"></div>
     <div class="card">
       <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Jornada por operador</h2><p class="hint" style="margin:0">Horas desde la primera fichada de entrada hasta la última de salida. Punteado rojo: jornada máxima. Puntos en rojo: por encima de la jornada máxima.</p></div>
-      <div class="row"><div class="seg" id="jGran"><button data-v="d" class="on">Día</button><button data-v="w">Semana</button><button data-v="m">Mes</button></div><div class="seg" id="jMet"><button data-v="avg" class="on">Promedio</button><button data-v="max">Máxima</button></div></div></div>
+      <div class="row"><div class="seg" id="jGran"><button data-v="d" class="on">Día</button><button data-v="w">Semana</button><button data-v="m">Mes</button></div><div class="seg" id="jMet"><button data-v="avg" class="on">Mediana</button><button data-v="max">Máxima</button></div></div></div>
       <div class="legend" id="legJ" style="margin-top:10px"></div><div class="chart" id="chJ"></div>
       <div class="tblwrap" style="margin-top:12px;max-height:380px"><table class="data" id="tblJPer"></table></div>
     </div>
     <div class="grid2">
       <div class="card"><h2>Distribución de jornadas</h2><p class="hint">Cantidad de jornadas por duración. En rojo, las que superan la jornada máxima.</p><div class="chart" id="chJHist"></div></div>
-      <div class="card"><h2>Jornada por operador</h2><p class="hint">Promedio, máxima y jornadas por encima del máximo.</p><div class="tblwrap" style="max-height:none"><table class="data" id="tblJOl"></table></div></div>
+      <div class="card"><h2>Jornada por operador</h2><p class="hint">Mediana, máxima y jornadas por encima del máximo.</p><div class="tblwrap" style="max-height:none"><table class="data" id="tblJOl"></table></div></div>
     </div>
     <div class="card">
-      <div class="row" style="justify-content:space-between"><div><h2>Jornada por chofer</h2><p class="hint" style="margin:0">Promedio y máxima del período. En rojo, valores por encima de la jornada máxima.</p></div>
-      <div class="row"><select id="jRankBy"><option value="max">Ordenar por jornada máxima</option><option value="avg">por promedio</option><option value="over">por jornadas excedidas</option></select><input type="search" id="jQ" placeholder="Buscar chofer…"><button class="btn sm" data-copy="tblJCh">Copiar</button></div></div>
+      <div class="row" style="justify-content:space-between"><div><h2>Jornada por chofer</h2><p class="hint" style="margin:0">Mediana y máxima del período. En rojo, valores por encima de la jornada máxima.</p></div>
+      <div class="row"><select id="jRankBy"><option value="max">Ordenar por jornada máxima</option><option value="avg">por mediana</option><option value="over">por jornadas excedidas</option></select><input type="search" id="jQ" placeholder="Buscar chofer…"><button class="btn sm" data-copy="tblJCh">Copiar</button></div></div>
       <div class="tblwrap" style="margin-top:12px"><table class="data" id="tblJCh"></table></div>
     </div>
     <div class="card">
@@ -631,8 +631,9 @@ const fmtMin=m=>{if(m==null||isNaN(m))return'';if(XM&&m>=0)return XV(m/1440,'[h]
 const r1=v=>v==null||isNaN(v)?'–':(Math.round(v*10)/10).toLocaleString('es-AR',{maximumFractionDigits:1});
 const r0=v=>v==null||isNaN(v)?'–':Math.round(v).toLocaleString('es-AR');
 const pct=v=>v==null||isNaN(v)?'–':Math.round(v*100)+'%';
-const mean=a=>{let s=0,n=0;for(const x of a)if(x!=null&&!isNaN(x)){s+=x;n++}return n?s/n:null};
-const median=a=>{const b=a.filter(x=>x!=null&&!isNaN(x)).sort((x,y)=>x-y);if(!b.length)return null;const m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
+const avg=a=>{let s=0,n=0;for(const x of a)if(x!=null&&!isNaN(x)){s+=x;n++}return n?s/n:null};
+const median=a=>{const b=[];for(const x of a)if(x!=null&&!isNaN(x))b.push(x);if(!b.length)return null;b.sort((x,y)=>x-y);const m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
+const mean=median; // los indicadores del tablero muestran la MEDIANA (avg = promedio aritmético)
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cssv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const MIN=60000;
@@ -1289,10 +1290,10 @@ function chartHBars(el,items,meta){
 }
 function renderEsc(){
   const B=REC.filter(r=>mOk(r.fecha,F)&&(!F.desde||r.fecha>=F.desde)&&(!F.hasta||r.fecha<=F.hasta)&&(!F.ol||r.ol===F.ol)&&(!F.vta||r.vuelta===F.vta)&&r.total!=null&&r.enc!=='SIN DATO');
-  const g=f=>{const a=B.filter(f);return{v:mean(a.map(r=>r.total)),n:a.length,m:median(a.map(r=>r.total)),ok:a.length?a.filter(r=>r.total<=METAS.tot).length/a.length:null}};
+  const g=f=>{const a=B.filter(f);return{v:mean(a.map(r=>r.total)),n:a.length,m:avg(a.map(r=>r.total)),ok:a.length?a.filter(r=>r.total<=METAS.tot).length/a.length:null}};
   const E=r=>r.enc==='ENCIERRO',T=r=>r.tr==='SI';
   const esc4=[['Con TR · con encierro',g(r=>T(r)&&E(r)),'var(--e2)'],['Sin TR · con encierro',g(r=>!T(r)&&E(r)),'var(--enc-con)'],['Con TR · sin encierro',g(r=>T(r)&&!E(r)),'var(--s1)'],['Sin TR · sin encierro',g(r=>!T(r)&&!E(r)),'var(--enc-sin)']];
-  chartHBars($('#chEsc'),esc4.map(([n,o,c])=>({name:n,sub:`${o.n.toLocaleString('es-AR')} rutas · ${pct(o.ok)} en meta`,v:o.v||0,color:c,tip:`<b>${n}</b><br>Promedio: <b>${r1(o.v)} min</b> · mediana ${r1(o.m)}<br>${o.n} rutas · ${pct(o.ok)} dentro de meta`})),METAS.tot);
+  chartHBars($('#chEsc'),esc4.map(([n,o,c])=>({name:n,sub:`${o.n.toLocaleString('es-AR')} rutas · ${pct(o.ok)} en meta`,v:o.v||0,color:c,tip:`<b>${n}</b><br>Mediana: <b>${r1(o.v)} min</b> · promedio ${r1(o.m)}<br>${o.n} rutas · ${pct(o.ok)} dentro de meta`})),METAS.tot);
   const cell=(f,lab)=>{const o=g(f);const d=o.v==null?null:o.v-METAS.tot;const c=d==null?'':d<=0?'good':d<=5?'warn':'crit';const ic=c==='good'?'●':c==='warn'?'▲':'■';
     return `<td style="padding:10px;border:1px solid var(--grid);vertical-align:top"><div style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">${r0(o.v)}′ ${d!=null?`<span class="st2 ${c}" style="font-size:13px"><span style="font-size:9px">${ic}</span>${d>0?'+':''}${r0(d)}′</span>`:''}</div><div class="muted" style="font-size:12px">${o.n} rutas · mediana ${r0(o.m)}′ · ${pct(o.ok)} en meta</div></td>`};
   $('#matEsc').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12.5px"><tr><th></th><th style="text-align:left;padding:6px 10px;color:var(--ink-2)">Con Team Room</th><th style="text-align:left;padding:6px 10px;color:var(--ink-2)">Sin Team Room</th></tr>
@@ -1324,7 +1325,7 @@ function chartRadar(el,axes,series,labels){
     if(labels){const v=series[0].vals[a.z];s+=`<text x="${lx}" y="${ly+(Math.sin(ang(i))>.5?23:Math.sin(ang(i))<-.5?-15:17)}" text-anchor="${anc}" class="ax">${r1(v)} min</text>`}});
   series.forEach(se=>{const P=axes.map((a,i)=>pt(i,se.vals[a.z]||0));
     s+=`<polygon points="${P.map(p=>p.join(',')).join(' ')}" fill="${se.color}" fill-opacity="${se.fill}" stroke="${se.color}" stroke-width="2" stroke-linejoin="round"/>`;
-    P.forEach((p,i)=>{const a=axes[i];s+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${se.color}" stroke="var(--surface)" stroke-width="1.5"/><circle cx="${p[0]}" cy="${p[1]}" r="10" class="hit" data-tip="<b>${esc(se.name)}</b> · ${a.n}<br><b>${r1(se.vals[a.z])} min</b> promedio por ruta<br>${se.vals['n'+a.z]||0} rutas con dato"/>`})});
+    P.forEach((p,i)=>{const a=axes[i];s+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${se.color}" stroke="var(--surface)" stroke-width="1.5"/><circle cx="${p[0]}" cy="${p[1]}" r="10" class="hit" data-tip="<b>${esc(se.name)}</b> · ${a.n}<br><b>${r1(se.vals[a.z])} min</b> por ruta (mediana)<br>${se.vals['n'+a.z]||0} rutas con dato"/>`})});
   el.innerHTML=s+'</svg>';
 }
 let dayMode='tot';
@@ -1338,7 +1339,7 @@ function renderDays(C,ols){
   ser=ser.map(([n,c,f])=>{const g=by(f);return{name:n,color:c,vals:g.map(a=>mean(a.map(r=>r.total))),n:g.map(a=>a.length)}});
   $('#legDay').innerHTML=ser.length>1?ser.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join(''):'';
   chartLine($('#chDay'),days,ser,METAS.tot);
-  $('#tblDay').innerHTML=`<thead><tr><th>Fecha</th><th>Día</th><th class="n">Rutas</th><th class="n">Prom. total</th><th class="n">vs meta</th><th class="n">Con enc.</th><th class="n">Sin enc.</th><th class="n">% encierro</th><th class="n">Rutas con TR</th><th class="n">% en meta</th>${ols.map(o=>`<th class="n">${esc(o)}</th>`).join('')}</tr></thead><tbody>`+
+  $('#tblDay').innerHTML=`<thead><tr><th>Fecha</th><th>Día</th><th class="n">Rutas</th><th class="n">Mediana total</th><th class="n">vs meta</th><th class="n">Con enc.</th><th class="n">Sin enc.</th><th class="n">% encierro</th><th class="n">Rutas con TR</th><th class="n">% en meta</th>${ols.map(o=>`<th class="n">${esc(o)}</th>`).join('')}</tr></thead><tbody>`+
     days.slice().reverse().map(d=>{const a=C.filter(r=>r.fecha===d);const v=mean(a.map(r=>r.total));const dd=v-METAS.tot;const c=dd<=0?'good':dd<=5?'warn':'crit';
       return `<tr><td>${fmtD(d)}</td><td>${DOW[new Date(d+'T12:00').getDay()]}</td><td class="n">${a.length}</td><td class="n"><b>${r1(v)}</b></td><td class="n"><span class="st2 ${c}">${dd>0?'+':''}${r1(dd)}</span></td><td class="n">${r1(mean(a.filter(r=>r.enc==='ENCIERRO').map(r=>r.total)))}</td><td class="n">${r1(mean(a.filter(r=>r.enc==='NO ENCIERRO').map(r=>r.total)))}</td><td class="n">${pct(a.filter(r=>r.enc==='ENCIERRO').length/a.length)}</td><td class="n">${a.filter(r=>r.tr==='SI').length}</td><td class="n">${pct(a.filter(r=>r.total<=METAS.tot).length/a.length)}</td>${ols.map(o=>`<td class="n">${r1(mean(a.filter(r=>r.ol===o).map(r=>r.total)))}</td>`).join('')}</tr>`}).join('')+'</tbody>';
 }
@@ -1353,11 +1354,11 @@ function renderPre(){
   const def=R.filter(r=>r.enc!=='SIN DATO');const cum=C.length?C.filter(r=>!r.fuera).length/C.length:null;
   $('#kpis').innerHTML=`
    <div class="kpi"><div class="l">Rutas analizadas</div><div class="v">${r0(R.length)}</div><div class="s">${C.length} con tiempo · ${new Set(R.map(r=>r.dni)).size} choferes</div></div>
-   <div class="kpi"><div class="l">TML pre ruta promedio</div><div class="v">${r0(mean(C.map(r=>r.total)))}<small>min</small></div><div class="s">mediana ${r0(median(C.map(r=>r.total)))} min</div></div>
+   <div class="kpi"><div class="l">TML pre ruta (mediana)</div><div class="v">${r0(mean(C.map(r=>r.total)))}<small>min</small></div><div class="s">promedio ${r0(avg(C.map(r=>r.total)))} min</div></div>
    <div class="kpi"><div class="l">Camiones con encierro</div><div class="v">${pct(def.length?def.filter(r=>r.enc==='ENCIERRO').length/def.length:null)}</div><div class="s">${def.filter(r=>r.enc==='ENCIERRO').length} de ${def.length} rutas con dato</div></div>
-   <div class="kpi"><div class="l">Promedio por tipo</div><div class="split"><div>${r0(mean(con.map(r=>r.total)))}′<span>con encierro</span></div><div>${r0(mean(sin.map(r=>r.total)))}′<span>sin encierro</span></div></div></div>
-   <div class="kpi"><div class="l">Promedio vs meta (${METAS.tot}′)</div><div class="v">${vsMeta(mean(C.map(r=>r.total)))}</div><div class="s">${pct(cum)} de las rutas dentro de ${METAS.tot}′</div></div>
-   <div class="kpi"><div class="l">Checklist de salida</div><div class="v">${r1(mean(R.map(r=>r.chkDur)))}<small>min</small></div><div class="s">duración prom. · Team Room: ${R.filter(r=>r.tr==='SI').length} rutas</div></div>`;
+   <div class="kpi"><div class="l">Mediana por tipo</div><div class="split"><div>${r0(mean(con.map(r=>r.total)))}′<span>con encierro</span></div><div>${r0(mean(sin.map(r=>r.total)))}′<span>sin encierro</span></div></div></div>
+   <div class="kpi"><div class="l">Mediana vs meta (${METAS.tot}′)</div><div class="v">${vsMeta(mean(C.map(r=>r.total)))}</div><div class="s">${pct(cum)} de las rutas dentro de ${METAS.tot}′</div></div>
+   <div class="kpi"><div class="l">Checklist de salida</div><div class="v">${r1(mean(R.map(r=>r.chkDur)))}<small>min</small></div><div class="s">duración (mediana) · Team Room: ${R.filter(r=>r.tr==='SI').length} rutas</div></div>`;
   const ols=[...new Set(R.map(r=>r.ol))].sort();
   const mkG=(recs,segs)=>{const g=ols.map(o=>{const a=compAvg(recs.filter(r=>r.ol===o),segs);return{name:o,n:a.n,vals:a,tot:a.tot}}).filter(x=>x.n>0).sort((a,b)=>b.tot-a.tot);const a=compAvg(recs,segs);if(a.n)g.push({name:'Total CD',n:a.n,vals:a,tot:a.tot,bold:true});return g};
   $('#legSin').innerHTML=TS.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}</span>`).join('');
@@ -1378,10 +1379,10 @@ function renderPre(){
     return{name:rs[0].chofer,dni:rs[0].dni,ol:rs[0].ol,n:rs.length,enc:conR.length/rs.length,tCon:mean(conR.map(r=>r.total)),tSin:mean(sinR.map(r=>r.total)),tot:mean(rs.map(r=>r.total)),exc:mean(rs.map(r=>r.exc)),fuera:rs.filter(r=>r.fuera).length/rs.length,worst,avg,
       diff:Object.fromEntries(ALLT.map(t=>[t.k,avg[t.k]!=null&&cd[t.k]!=null?avg[t.k]-cd[t.k]:null])),compS:compAvg(sinR,TS),compC:compAvg(conR,TC)}}).sort($('#rankBy').value==='exc'?(a,b)=>b.exc-a.exc||b.tot-a.tot:(a,b)=>b.tot-a.tot);
   const top=rank.filter(r=>r.n>=+$('#minR').value).slice().sort((a,b)=>b.tot-a.tot).slice(0,15);
-  chartHBars($('#chTopCh'),top.map(r=>({name:r.name,sub:r.ol+' · '+r.n+' rutas',v:r.tot,tip:`<b>${esc(r.name)}</b> · ${esc(r.ol)}<br>Promedio: <b>${r1(r.tot)} min</b> (${r.n} rutas)<br>Con encierro: ${r1(r.tCon)} · Sin encierro: ${r1(r.tSin)}<br>% encierro: ${pct(r.enc)}`})),METAS.tot);
+  chartHBars($('#chTopCh'),top.map(r=>({name:r.name,sub:r.ol+' · '+r.n+' rutas',v:r.tot,tip:`<b>${esc(r.name)}</b> · ${esc(r.ol)}<br>Mediana: <b>${r1(r.tot)} min</b> (${r.n} rutas)<br>Con encierro: ${r1(r.tCon)} · Sin encierro: ${r1(r.tSin)}<br>% encierro: ${pct(r.enc)}`})),METAS.tot);
   const q=norm($('#qChofer').value);const shown=rank.filter(r=>r.n>=+$('#minR').value&&(!q||norm(r.name+r.dni).includes(q))).slice(0,+$('#topN').value);
   const mini=(c,segs)=>c.n?`<div class="bar-mini" title="${c.n} rutas">${segs.map(s=>c[s.k]>0?`<span style="width:${100*c[s.k]/(c.tot||1)}%;background:var(${s.c})"></span>`:'').join('')}</div>`:'<span class="muted">—</span>';
-  $('#tblRank').innerHTML=`<thead><tr><th>#</th><th>Chofer</th><th>OL</th><th class="n">Rutas</th><th class="n">% encierro</th><th class="n">Prom. total</th><th class="n">Prom. con enc.</th><th class="n">Prom. sin enc.</th><th class="n">Desvío prom.</th><th class="n">% rutas &gt; meta</th><th>Dónde pierde más</th><th>Tramos sin enc.</th><th>Tramos con enc.</th></tr></thead><tbody>`+
+  $('#tblRank').innerHTML=`<thead><tr><th>#</th><th>Chofer</th><th>OL</th><th class="n">Rutas</th><th class="n">% encierro</th><th class="n">Mediana total</th><th class="n">Med. con enc.</th><th class="n">Med. sin enc.</th><th class="n">Desvío (med.)</th><th class="n">% rutas &gt; meta</th><th>Dónde pierde más</th><th>Tramos sin enc.</th><th>Tramos con enc.</th></tr></thead><tbody>`+
     shown.map((r,i)=>`<tr><td class="muted">${i+1}</td><td><b>${esc(r.name)}</b> <span class="muted">${esc(r.dni)}</span></td><td>${esc(r.ol)}</td><td class="n">${r.n}</td><td class="n">${pct(r.enc)}</td><td class="n"><b>${r1(r.tot)}</b></td><td class="n">${r1(r.tCon)}</td><td class="n">${r1(r.tSin)}</td><td class="n"><b>+${r1(r.exc)}′</b></td><td class="n">${stBadge(r.fuera,true)}</td>
       <td>${r.worst&&r.worst.v>.5?`<span class="dot" style="background:var(${r.worst.t.c})"></span>${r.worst.t.n} <span class="muted">+${r1(r.worst.v)}′</span>`:'<span class="muted">—</span>'}</td><td>${mini(r.compS,TS)}</td><td>${mini(r.compC,TC)}</td></tr>`).join('')+'</tbody>';
   chartHeat($('#chHeat'),shown.map(r=>({name:r.name,ol:r.ol,diff:r.diff,avg:r.avg})),cd);
@@ -1389,7 +1390,7 @@ function renderPre(){
   const ot=ols.map(o=>{const rs=R.filter(r=>r.ol===o),cs=C.filter(r=>r.ol===o),d=rs.filter(r=>r.enc!=='SIN DATO');const o2={o,n:rs.length,ch:new Set(rs.map(r=>r.dni)).size,enc:d.length?d.filter(r=>r.enc==='ENCIERRO').length/d.length:null,
     con:mean(cs.filter(r=>r.enc==='ENCIERRO').map(r=>r.total)),sin:mean(cs.filter(r=>r.enc==='NO ENCIERRO').map(r=>r.total)),tot:mean(cs.map(r=>r.total)),cum:cs.length?cs.filter(r=>!r.fuera).length/cs.length:null,exc:mean(cs.map(r=>r.exc)),chk:mean(rs.map(r=>r.chkDur))};
     ALLT.forEach(t=>o2[t.k]=mean(cs.map(r=>r.T[t.k])));return o2}).sort((a,b)=>(b.tot||0)-(a.tot||0));
-  $('#tblOl').innerHTML=`<thead><tr><th>Operador</th><th class="n">Rutas</th><th class="n">Choferes</th><th class="n">% encierro</th><th class="n">Prom. total</th><th class="n">Con enc.</th><th class="n">Sin enc.</th>${ALLT.map(t=>`<th class="n" title="${esc(t.n)} · ${t.k[0]==='s'?'sin':'con'} encierro">${t.s||t.n}${t.k[0]==='s'?'':' <span class=\"muted\">(enc.)</span>'}</th>`).join('')}<th class="n">Checklist</th><th class="n">Desvío prom.</th><th class="n">Cumplimiento</th></tr></thead><tbody>`+
+  $('#tblOl').innerHTML=`<thead><tr><th>Operador</th><th class="n">Rutas</th><th class="n">Choferes</th><th class="n">% encierro</th><th class="n">Mediana total</th><th class="n">Con enc.</th><th class="n">Sin enc.</th>${ALLT.map(t=>`<th class="n" title="${esc(t.n)} · ${t.k[0]==='s'?'sin':'con'} encierro">${t.s||t.n}${t.k[0]==='s'?'':' <span class=\"muted\">(enc.)</span>'}</th>`).join('')}<th class="n">Checklist</th><th class="n">Desvío (med.)</th><th class="n">Cumplimiento</th></tr></thead><tbody>`+
     ot.map(r=>`<tr><td><b>${esc(r.o)}</b> <span class="muted">${OLN[r.o]||''}</span></td><td class="n">${r.n}</td><td class="n">${r.ch}</td><td class="n">${pct(r.enc)}</td><td class="n"><b>${r1(r.tot)}</b></td><td class="n">${r1(r.con)}</td><td class="n">${r1(r.sin)}</td>${ALLT.map(t=>`<td class="n">${r1(r[t.k])}</td>`).join('')}<td class="n">${r1(r.chk)}</td><td class="n">${r1(r.exc)}</td><td class="n">${stBadge(r.cum)}</td></tr>`).join('')+'</tbody>';
 }
 $('#qChofer').oninput=()=>renderPre();$('#rankBy').onchange=()=>renderPre();$('#minR').onchange=()=>renderPre();$('#topN').onchange=()=>renderPre();
@@ -1519,7 +1520,7 @@ function buildRuta(){
       const f1=(vis[0].vi-P.sal)/MIN;P.first=f1>=0&&f1<600?f1:null;
       const lE=Math.max(...vis.map(v=>v.vf));const l1=(P.reg-lE)/MIN;P.last=l1>=0&&l1<600?l1:null;
       const gaps=[];let end=vis[0].vf;for(let i=1;i<vis.length;i++){gaps.push(Math.max(0,(vis[i].vi-end)/MIN));end=Math.max(end,vis[i].vf)}
-      P.betw=gaps.length?mean(gaps):null;P.sumBetw=gaps.reduce((a,b)=>a+b,0);
+      P.betw=gaps.length?avg(gaps):null;P.sumBetw=gaps.reduce((a,b)=>a+b,0);
     }
     P.np=h.np;P.tp=h.tp;P.nnp=h.nnp;P.tnp=h.tnp;
     // resultados de visitas
@@ -1535,7 +1536,7 @@ function buildRuta(){
       if(best&&bn/rows.length>=.5){const rt=rMap.get(best);const st=(rStops.get(best)||[]).slice().sort((a,b)=>(a.seq??0)-(b.seq??0));
         const pl={rid:best,ov:bn/rows.length,tRota:rt.tRota,tAt:rt.tAt,km:rt.km,q:rt.q??st.length,ini:rt.ini,ref:rt.ref};
         pl.tDesp=pl.tRota!=null&&pl.tAt!=null?pl.tRota-pl.tAt-(rt.ref||0):null;
-        pl.first=st[0]?.tDir??null;const bt=st.slice(1).map(s=>s.tDir).filter(v=>v!=null);pl.betw=bt.length?mean(bt):null;
+        pl.first=st[0]?.tDir??null;const bt=st.slice(1).map(s=>s.tDir).filter(v=>v!=null);pl.betw=bt.length?avg(bt):null;
         // adherencia de secuencia (LIS)
         const seqOf=new Map(st.map(s=>[s.cli,s.seq]));const ordd=rows.filter(r=>r.ord>0).sort((a,b)=>a.ord-b.ord);const seqReal=(ordd.length>=vis.length?ordd:vis).map(v=>seqOf.get(v.cli)).filter(v=>v!=null);
         if(seqReal.length>=3){const t=[];for(const x of seqReal){let lo=0,hi=t.length;while(lo<hi){const m=(lo+hi)>>1;if(t[m]<x)lo=m+1;else hi=m}t[lo]=x}pl.adh=t.length/seqReal.length}
@@ -1588,11 +1589,11 @@ function renderRuta(){
   // KPIs
   $('#rKpis').innerHTML=`
    <div class="kpi"><div class="l">Planillas</div><div class="v">${r0(P.length)}</div><div class="s">${r0(C.length)} clientes · ${r1(P.length?C.length/P.length:null)} por planilla</div></div>
-   <div class="kpi"><div class="l">Tiempo en ruta promedio</div><div class="v">${hm(mean(T.map(r=>r.tRuta)))}<small>h</small></div><div class="s">plan ruteo ${hm(mean(pl.map(r=>r.plan.tRota)))} h · real ${hm(mean(pl.map(r=>r.tRuta)))} h</div></div>
+   <div class="kpi"><div class="l">Tiempo en ruta (mediana)</div><div class="v">${hm(mean(T.map(r=>r.tRuta)))}<small>h</small></div><div class="s">plan ruteo ${hm(mean(pl.map(r=>r.plan.tRota)))} h · real ${hm(mean(pl.map(r=>r.tRuta)))} h</div></div>
    <div class="kpi"><div class="l">Atención a clientes</div><div class="v">${hm(mean(T.map(r=>r.tAt)))}<small>h</small></div><div class="s">por planilla (${AT_SRC==='72'?'data 72':'data 71'}) · ${r1(mean(vis.map(c=>c.tv)))} min por cliente en BEES</div></div>
    <div class="kpi"><div class="l">Desplazamiento</div><div class="v">${hm(mean(T.map(r=>r.tDesp)))}<small>h</small></div><div class="s">CD → 1er cliente ${r0(mean(T.map(r=>r.first)))}′ · entre PDV ${r1(mean(T.map(r=>r.betw)))}′</div></div>
-   <div class="kpi"><div class="l">Paradas no planificadas</div><div class="v">${pct(P.length?pnpR.length/P.length:null)}</div><div class="s">de las planillas · ${r1(mean(pnpR.map(r=>r.tnp)))} min prom. cuando ocurren</div></div>
-   <div class="kpi"><div class="l">Paradas (totales)</div><div class="v">${r1(mean(P.map(r=>r.tp)))}<small>min</small></div><div class="s">prom. por planilla · ${pct(P.length?P.filter(r=>r.np>0).length/P.length:null)} con paradas</div></div>`;
+   <div class="kpi"><div class="l">Paradas no planificadas</div><div class="v">${pct(P.length?pnpR.length/P.length:null)}</div><div class="s">de las planillas · ${r1(mean(pnpR.map(r=>r.tnp)))} min (mediana) cuando ocurren</div></div>
+   <div class="kpi"><div class="l">Paradas (totales)</div><div class="v">${r1(mean(P.map(r=>r.tp)))}<small>min</small></div><div class="s">mediana por planilla · ${pct(P.length?P.filter(r=>r.np>0).length/P.length:null)} con paradas</div></div>`;
   // composition by OL
   const ols=[...new Set(P.map(r=>r.ol))].sort();
   const comp=rs=>{const ok=rs.filter(r=>r.rest!=null);const o={};RSEG.forEach(s=>o[s.k]=mean(ok.map(r=>r[s.k]))||0);o.tot=RSEG.reduce((a,s)=>a+o[s.k],0);o.n=ok.length;return o};
@@ -1609,7 +1610,7 @@ function renderRuta(){
       {name:'Real',color:'var(--real)',vals:olP.map(o=>mean(pl.filter(r=>r.ol===o).map(r=>r.tRuta))),n:olP.map(o=>pl.filter(r=>r.ol===o).length)}],[]);
     const row=(lab,fp,fr,u='min')=>{const a=mean(pl.map(fp)),b=mean(pl.map(fr));const d=b-a;return`<tr><td>${lab}</td><td class="n">${u==='h'?hm(a):r1(a)}</td><td class="n"><b>${u==='h'?hm(b):r1(b)}</b></td><td class="n" style="color:${d>0?'var(--crit)':'var(--good)'}">${d>0?'+':''}${u==='h'?hm(d):r1(d)}</td></tr>`};
     const adh=pl.map(r=>r.plan.adh).filter(v=>v!=null);
-    $('#tblPlan').innerHTML=`<thead><tr><th>Indicador (prom. por planilla)</th><th class="n">Plan</th><th class="n">Real</th><th class="n">Diferencia</th></tr></thead><tbody>
+    $('#tblPlan').innerHTML=`<thead><tr><th>Indicador (mediana por planilla)</th><th class="n">Plan</th><th class="n">Real</th><th class="n">Diferencia</th></tr></thead><tbody>
       ${row('Tiempo en ruta (h)',r=>r.plan.tRota,r=>r.tRuta,'h')}${row('Atención a clientes (h)',r=>r.plan.tAt,r=>r.tAt,'h')}${row('Desplazamiento (h)',r=>r.plan.tDesp,r=>r.tDesp,'h')}
       ${row('CD → 1er cliente (min)',r=>r.plan.first,r=>r.first)}${row('Entre clientes (min)',r=>r.plan.betw,r=>r.betw)}${row('Clientes por planilla',r=>r.plan.q,r=>r.nCli,'n')}
       <tr><td>Salida real vs. inicio planificado (min)</td><td class="n">–</td><td class="n"><b>${r1(mean(pl.map(r=>r.iniDelay)))}</b></td><td class="n muted">+ = salió más tarde</td></tr>
@@ -1621,7 +1622,7 @@ function renderRuta(){
   const byCh=new Map();P.forEach(r=>{(byCh.get(r.chofer)||byCh.set(r.chofer,[]).get(r.chofer)).push(r)});
   const pnpCh=[...byCh].map(([k,rs])=>({k,ol:rs[0].ol,n:rs.length,nn:rs.reduce((a,r)=>a+r.nnp,0),tt:rs.reduce((a,r)=>a+r.tnp,0),pl:rs.filter(r=>r.nnp>0).length})).filter(x=>x.nn>0).sort((a,b)=>b.tt-a.tt).slice(0,15);
   chartHBars($('#chPnpCh'),pnpCh.map(x=>({name:x.k,sub:`${x.ol} · ${x.nn} paradas en ${x.pl} de ${x.n} planillas`,v:x.tt,color:'var(--s3)',tip:`<b>${esc(x.k)}</b> · ${x.ol}<br>${x.nn} paradas no planificadas · <b>${r0(x.tt)} min</b><br>${x.pl} de ${x.n} planillas (${pct(x.pl/x.n)})<br>${r1(x.tt/x.nn)} min por parada`})),null);
-  chartHBars($('#chPnpOl'),ols.map(o=>{const rs=P.filter(r=>r.ol===o),w=rs.filter(r=>r.nnp>0);return{name:o,sub:`${w.length} de ${rs.length} planillas`,v:rs.length?100*w.length/rs.length:0,color:'var(--s3)',tip:`<b>${o}</b><br>${pct(rs.length?w.length/rs.length:null)} de planillas con paradas no planificadas<br>${r1(mean(w.map(r=>r.tnp)))} min promedio cuando ocurren`}}).sort((a,b)=>b.v-a.v),null);
+  chartHBars($('#chPnpOl'),ols.map(o=>{const rs=P.filter(r=>r.ol===o),w=rs.filter(r=>r.nnp>0);return{name:o,sub:`${w.length} de ${rs.length} planillas`,v:rs.length?100*w.length/rs.length:0,color:'var(--s3)',tip:`<b>${o}</b><br>${pct(rs.length?w.length/rs.length:null)} de planillas con paradas no planificadas<br>${r1(mean(w.map(r=>r.tnp)))} min (mediana) cuando ocurren`}}).sort((a,b)=>b.v-a.v),null);
   $('#chPnpOl').querySelectorAll('.lbl').forEach(t=>t.textContent=t.textContent.replace('′','%'));
   const days=[...new Set(P.map(r=>r.fecha))].sort();
   chartLine($('#chPnpDay'),days,[{name:'Min. paradas no planificadas',color:'var(--s3)',vals:days.map(d=>P.filter(r=>r.fecha===d).reduce((a,r)=>a+r.tnp,0)),n:days.map(d=>P.filter(r=>r.fecha===d&&r.nnp>0).length)}]);
@@ -1630,13 +1631,13 @@ function renderRuta(){
   chartHBars($('#chAtCh'),atCh.map(x=>({name:x.k,sub:`${x.ol} · ${x.nv} visitas`,v:x.v,color:'var(--s2)',tip:`<b>${esc(x.k)}</b> · ${x.ol}<br><b>${r1(x.v)} min</b> por cliente (${x.nv} visitas)<br>${hm(x.pl)} h de atención por planilla`})),mean(vis.map(c=>c.tv)));
   const byCli=new Map();vis.forEach(c=>{(byCli.get(c.cli)||byCli.set(c.cli,[]).get(c.cli)).push(c)});
   const topCli=[...byCli].filter(([k,a])=>a.length>=3).map(([k,a])=>({k,nom:a[0].nom,seg:a[0].seg,n:a.length,v:mean(a.map(c=>c.tv)),mx:Math.max(...a.map(c=>c.tv)),ch:topCount(a,c=>c.chofer,1)[0]?.[0]})).sort((a,b)=>b.v-a.v).slice(0,30);
-  $('#tblCli').innerHTML=`<thead><tr><th>#</th><th>Cliente</th><th>Segmento</th><th class="n">Visitas</th><th class="n">Prom. min</th><th class="n">Máx. min</th><th>Chofer más frecuente</th></tr></thead><tbody>`+topCli.map((x,i)=>`<tr><td class="muted">${i+1}</td><td><b>${esc(x.nom)}</b> <span class="muted">${x.k}</span></td><td>${esc(cap(x.seg))}</td><td class="n">${x.n}</td><td class="n"><b>${r1(x.v)}</b></td><td class="n">${r0(x.mx)}</td><td>${esc(x.ch||'')}</td></tr>`).join('')+'</tbody>';
+  $('#tblCli').innerHTML=`<thead><tr><th>#</th><th>Cliente</th><th>Segmento</th><th class="n">Visitas</th><th class="n">Mediana min</th><th class="n">Máx. min</th><th>Chofer más frecuente</th></tr></thead><tbody>`+topCli.map((x,i)=>`<tr><td class="muted">${i+1}</td><td><b>${esc(x.nom)}</b> <span class="muted">${x.k}</span></td><td>${esc(cap(x.seg))}</td><td class="n">${x.n}</td><td class="n"><b>${r1(x.v)}</b></td><td class="n">${r0(x.mx)}</td><td>${esc(x.ch||'')}</td></tr>`).join('')+'</tbody>';
   // intentos / reagendamiento
   const rea=C.filter(c=>c.rea),rch=C.filter(c=>c.rech),multi=C.filter(c=>c.it>1);
   $('#rIntKpis').innerHTML=`<div class="kpi"><div class="l">Visitas con más de un intento</div><div class="v">${pct(C.length?multi.length/C.length:null)}</div><div class="s">${multi.length} visitas</div></div>
     <div class="kpi"><div class="l">Visitas reagendadas</div><div class="v">${pct(C.length?rea.length/C.length:null)}</div><div class="s">${rea.length} visitas</div></div>
     <div class="kpi"><div class="l">Visitas con rechazo</div><div class="v">${pct(C.length?rch.length/C.length:null)}</div><div class="s">${rch.length} visitas</div></div>
-    <div class="kpi"><div class="l">Intentos promedio</div><div class="v">${r1(mean(C.map(c=>c.it)))}</div><div class="s">por visita</div></div>`;
+    <div class="kpi"><div class="l">Intentos (mediana)</div><div class="v">${r1(mean(C.map(c=>c.it)))}</div><div class="s">por visita</div></div>`;
   const motRea=topCount(rea,c=>c.mrea||c.mot||'Sin motivo',10),motRch=topCount(rch,c=>c.mot||c.mmod||'Sin motivo',10);
   chartHBars($('#chMotRea'),motRea.map(([k,n])=>({name:k,sub:pct(n/rea.length),v:n,color:'var(--e2)',tip:`<b>${esc(k)}</b><br>${n} visitas (${pct(n/rea.length)})`})),null);
   chartHBars($('#chMotRech'),motRch.map(([k,n])=>({name:k,sub:pct(n/rch.length),v:n,color:'var(--crit)',tip:`<b>${esc(k)}</b><br>${n} visitas (${pct(n/rch.length)})`})),null);
@@ -1874,8 +1875,8 @@ function renderPost(){
   $('#postEmpty').style.display='none';$('#postBody').style.display='';
   const P=pFilt(),T=P.filter(r=>r.tot!=null),S=T.filter(r=>r.segOk);
   $('#pKpis').innerHTML=`<div class="kpi"><div class="l">Choferes-día</div><div class="v">${r0(P.length)}</div><div class="s">${T.length} con tiempo interno · ${S.length} con geocercas</div></div>
-   <div class="kpi"><div class="l">Tiempo interno</div><div class="v">${r0(mean(T.map(r=>r.tot)))}<small>min</small></div><div class="s">mediana ${r0(median(T.map(r=>r.tot)))} min</div></div>`+
-   PT.map(t=>`<div class="kpi"><div class="l">${t.n}</div><div class="v">${r1(mean(S.map(r=>r[t.k])))}<small>min</small></div><div class="s">mediana ${r1(median(S.map(r=>r[t.k])))} min</div></div>`).join('');
+   <div class="kpi"><div class="l">Tiempo interno</div><div class="v">${r0(mean(T.map(r=>r.tot)))}<small>min</small></div><div class="s">promedio ${r0(avg(T.map(r=>r.tot)))} min</div></div>`+
+   PT.map(t=>`<div class="kpi"><div class="l">${t.n}</div><div class="v">${r1(mean(S.map(r=>r[t.k])))}<small>min</small></div><div class="s">promedio ${r1(avg(S.map(r=>r[t.k])))} min</div></div>`).join('');
   const ols=[...new Set(P.map(r=>r.ol))].sort();
   const comp=rs=>{const o={};PT.forEach(t=>o[t.k]=mean(rs.map(r=>r[t.k]))||0);o.tot=PT.reduce((a,t)=>a+o[t.k],0);o.n=rs.length;return o};
   const groups=ols.map(o=>{const a=comp(S.filter(r=>r.ol===o));return{name:o,n:a.n,vals:a,tot:a.tot}}).filter(g=>g.n).sort((a,b)=>b.tot-a.tot);const all=comp(S);if(all.n)groups.push({name:'Total CD',n:all.n,vals:all,tot:all.tot,bold:true});
@@ -1995,7 +1996,7 @@ function renderTree(){
     return`<tr><td style="padding-left:${8+lv*18}px">${lv<=1?'<b>'+esc(n.n)+'</b>':esc(n.n)}</td><td class="n">${n.tgt!=null?fm(n.tgt):'–'}</td><td class="n">${fm(n.plan)}</td><td class="n"><b>${fm(n.real)}</b></td><td class="n" style="color:${st.col}">${d==null?'–':(d>0?'+':'')+fm(d)}</td><td class="n">${n.cnt!=null?n.cnt.toLocaleString('es-AR'):''}</td><td><span class="st2 ${st.c==='none'?'':st.c}" style="${st.c==='none'?'color:var(--ink-3)':''}">${st.ic}</span></td><td class="muted">${esc(n.extra||'')}</td></tr>`}).join('')+'</tbody>';
 }
 $('#btnTgt').onclick=()=>{const it=[['hd','Pre ruta'],['pre','Tiempo pre ruta total (máx.)'],['tr','Team Room (máx.)'],['carga','Carga de camión'],['portPre','Control de portería'],['chk','Checklist'],
-  ['hd','En ruta'],['ruta','Tiempo total (máx.)'],['at','Atención (promedio)'],['atMin','Atención minoristas'],['atSmk','Atención supermercados'],['desp','Desplazamiento'],['pnp','Paradas no planificadas'],
+  ['hd','En ruta'],['ruta','Tiempo total (máx.)'],['at','Atención (mediana)'],['atMin','Atención minoristas'],['atSmk','Atención supermercados'],['desp','Desplazamiento'],['pnp','Paradas no planificadas'],
   ['hd','Post ruta'],['post','Tiempo interno total'],['portPost','Portería'],['gatPost','Gatera'],['fin','Financiero'],['finMin','Financiero minoristas'],['finSmk','Financiero supermercados']];
   $('#tgtForm').innerHTML=it.map(([k,n])=>k==='hd'?`<div class="hd">${n}</div>`:`<label>${n}<small>minutos</small></label><input type="number" min="0" step="any" data-k="${k}" value="${TGT[k]}">`).join('');$('#mTgt').classList.add('on')};
 $('#mTgt').onclick=e=>{if(e.target.id==='mTgt')$('#mTgt').classList.remove('on')};
@@ -2062,11 +2063,11 @@ function renderJor(){
   const red=h=>h!=null&&h>MX?`<b style="color:var(--crit)">${hh(h)}</b>`:hh(h);
   const mx=H.reduce((a,r)=>!a||r.h>a.h?r:a,null);
   $('#jKpis').innerHTML=`<div class="kpi"><div class="l">Jornadas</div><div class="v">${r0(J.length)}</div><div class="s">${H.length} completas · ${new Set(J.map(r=>r.dni)).size} personas</div></div>
-   <div class="kpi"><div class="l">Jornada promedio</div><div class="v" style="${mean(H.map(r=>r.h))>MX?'color:var(--crit)':''}">${hh(mean(H.map(r=>r.h)))}<small>h</small></div><div class="s">mediana ${hh(median(H.map(r=>r.h)))} h</div></div>
+   <div class="kpi"><div class="l">Jornada (mediana)</div><div class="v" style="${mean(H.map(r=>r.h))>MX?'color:var(--crit)':''}">${hh(mean(H.map(r=>r.h)))}<small>h</small></div><div class="s">mediana ${hh(median(H.map(r=>r.h)))} h</div></div>
    <div class="kpi"><div class="l">Jornada máxima</div><div class="v" style="${mx&&mx.h>MX?'color:var(--crit)':''}">${hh(mx?.h)}<small>h</small></div><div class="s">${mx?esc(mx.chofer)+' · '+fmtD(mx.fecha):''}</div></div>
    <div class="kpi"><div class="l">Jornadas de más de ${MX} h</div><div class="v" style="color:var(--crit)">${pct(H.length?over.length/H.length:null)}</div><div class="s">${over.length} jornadas</div></div>
    <div class="kpi"><div class="l">Personas con jornadas de más de ${MX} h</div><div class="v">${r0(new Set(over.map(r=>r.dni)).size)}</div><div class="s">de ${new Set(H.map(r=>r.dni)).size}</div></div>
-   <div class="kpi"><div class="l">Ingreso / salida promedio</div><div class="split"><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.ing);return d.getHours()*60+d.getMinutes()})))}<span>ingreso</span></div><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.sal);return d.getHours()*60+d.getMinutes()})))}<span>salida</span></div></div></div>`;
+   <div class="kpi"><div class="l">Ingreso / salida (mediana)</div><div class="split"><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.ing);return d.getHours()*60+d.getMinutes()})))}<span>ingreso</span></div><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.sal);return d.getHours()*60+d.getMinutes()})))}<span>salida</span></div></div></div>`;
   // por período
   const key=r=>jGran==='m'?r.fecha.slice(0,7):jGran==='w'?wkOf(r.fecha):r.fecha;const lab=jGran==='m'?mLbl:jGran==='w'?(d=>'sem '+fmtD(d).slice(0,5)):(d=>fmtD(d).slice(0,5));
   const pers=[...new Set(H.map(key))].sort();const ols=[...new Set(H.map(r=>r.ol))].filter(o=>o!=='—').sort();
@@ -2075,17 +2076,17 @@ function renderJor(){
   ser.push({name:'Total CD',color:'var(--ink)',vals:pers.map(p=>agg(H.filter(r=>key(r)===p))),n:pers.map(p=>H.filter(r=>key(r)===p).length)});
   $('#legJ').innerHTML=ser.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')+`<span><i style="background:var(--crit)"></i>Más de ${MX} h</span>`;
   chartLine($('#chJ'),pers,ser,MX,lab,{unit:'h',red:MX,fmt:hh});
-  $('#tblJPer').innerHTML=`<thead><tr><th>${jGran==='m'?'Mes':jGran==='w'?'Semana':'Fecha'}</th><th class="n">Jornadas</th><th class="n">Promedio</th><th class="n">Máxima</th><th class="n">&gt; ${MX} h</th>${ols.map(o=>`<th class="n">${o} ${jMet==='max'?'máx.':'prom.'}</th>`).join('')}</tr></thead><tbody>`+
+  $('#tblJPer').innerHTML=`<thead><tr><th>${jGran==='m'?'Mes':jGran==='w'?'Semana':'Fecha'}</th><th class="n">Jornadas</th><th class="n">Mediana</th><th class="n">Máxima</th><th class="n">&gt; ${MX} h</th>${ols.map(o=>`<th class="n">${o} ${jMet==='max'?'máx.':'med.'}</th>`).join('')}</tr></thead><tbody>`+
     pers.slice().reverse().map(p=>{const a=H.filter(r=>key(r)===p);const o8=a.filter(r=>r.h>MX).length;return`<tr><td>${jGran==='d'?fmtD(p)+' '+DOW[new Date(p+'T12:00').getDay()]:jGran==='w'?'Semana del '+fmtD(p):mLbl(p)}</td><td class="n">${a.length}</td><td class="n">${red(mean(a.map(r=>r.h)))}</td><td class="n">${red(Math.max(...a.map(r=>r.h)))}</td><td class="n">${o8?`<b style="color:var(--crit)">${o8}</b>`:'0'}</td>${ols.map(o=>`<td class="n">${red(agg(a.filter(r=>r.ol===o)))}</td>`).join('')}</tr>`}).join('')+'</tbody>';
   // histograma
   chartJHist($('#chJHist'),H.map(r=>r.h),MX);
   // por OL
-  $('#tblJOl').innerHTML=`<thead><tr><th>Operador</th><th class="n">Jornadas</th><th class="n">Personas</th><th class="n">Promedio</th><th class="n">Máxima</th><th class="n">&gt; ${MX} h</th><th class="n">%</th></tr></thead><tbody>`+[...ols,'Total'].map(o=>{const a=o==='Total'?H:H.filter(r=>r.ol===o);const o8=a.filter(r=>r.h>MX).length;
+  $('#tblJOl').innerHTML=`<thead><tr><th>Operador</th><th class="n">Jornadas</th><th class="n">Personas</th><th class="n">Mediana</th><th class="n">Máxima</th><th class="n">&gt; ${MX} h</th><th class="n">%</th></tr></thead><tbody>`+[...ols,'Total'].map(o=>{const a=o==='Total'?H:H.filter(r=>r.ol===o);const o8=a.filter(r=>r.h>MX).length;
     return`<tr><td>${o==='Total'?'<b>Total</b>':'<b>'+o+'</b> <span class="muted">'+(OLN[o]||'')+'</span>'}</td><td class="n">${a.length}</td><td class="n">${new Set(a.map(r=>r.dni)).size}</td><td class="n">${red(mean(a.map(r=>r.h)))}</td><td class="n">${red(a.length?Math.max(...a.map(r=>r.h)):null)}</td><td class="n">${o8?`<b style="color:var(--crit)">${o8}</b>`:'0'}</td><td class="n">${pct(a.length?o8/a.length:null)}</td></tr>`}).join('')+'</tbody>';
   // por chofer
   const by=new Map();H.forEach(r=>{(by.get(r.dni)||by.set(r.dni,[]).get(r.dni)).push(r)});const q=norm($('#jQ').value),sk=$('#jRankBy').value;
   const rk=[...by.values()].filter(a=>!q||norm(a[0].chofer+a[0].dni).includes(q)).map(a=>{const m=a.reduce((x,r)=>!x||r.h>x.h?r:x,null);return{ch:a[0].chofer,dni:a[0].dni,ol:a[0].ol,n:a.length,avg:mean(a.map(r=>r.h)),max:m.h,maxF:m.fecha,over:a.filter(r=>r.h>MX).length,ing:mean(a.map(r=>{const d=new Date(r.ing);return d.getHours()*60+d.getMinutes()})),sal:mean(a.map(r=>{const d=new Date(r.sal);return d.getHours()*60+d.getMinutes()}))}}).sort((a,b)=>b[sk]-a[sk]);
-  $('#tblJCh').innerHTML=`<thead><tr><th>#</th><th>Chofer</th><th>OL</th><th class="n">Jornadas</th><th class="n">Promedio</th><th class="n">Máxima</th><th>Fecha máxima</th><th class="n">Jornadas &gt; ${MX} h</th><th class="n">%</th><th class="n">Ingreso prom.</th><th class="n">Salida prom.</th></tr></thead><tbody>`+
+  $('#tblJCh').innerHTML=`<thead><tr><th>#</th><th>Chofer</th><th>OL</th><th class="n">Jornadas</th><th class="n">Mediana</th><th class="n">Máxima</th><th>Fecha máxima</th><th class="n">Jornadas &gt; ${MX} h</th><th class="n">%</th><th class="n">Ingreso (med.)</th><th class="n">Salida (med.)</th></tr></thead><tbody>`+
     rk.slice(0,300).map((x,i)=>`<tr><td class="muted">${i+1}</td><td><b>${esc(x.ch)}</b> <span class="muted">${esc(x.dni)}</span></td><td>${x.ol}</td><td class="n">${x.n}</td><td class="n">${red(x.avg)}</td><td class="n">${red(x.max)}</td><td>${fmtD(x.maxF)}</td><td class="n">${x.over?`<b style="color:var(--crit)">${x.over}</b>`:'0'}</td><td class="n">${pct(x.over/x.n)}</td><td class="n">${fmtMin(x.ing)}</td><td class="n">${fmtMin(x.sal)}</td></tr>`).join('')+'</tbody>';
   renderJDet(J);
   $('#jQual').innerHTML=`<div><b>${r0(JQ.n)}</b>jornadas armadas con el molinete</div><div><b>${pct(JQ.n?JQ.ch/JQ.n:null)}</b>de personas que están en la Salida de choferes</div><div><b>${pct(JQ.n?JQ.noSal/JQ.n:null)}</b>sin fichada de salida</div><div><b>${r0(JQ.long)}</b>descartadas por más de 18 h</div>`;
@@ -2284,7 +2285,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-copy
   else{const t=$('#'+b.dataset.copy);tsv=[...t.querySelectorAll('tr')].map(tr=>[...tr.children].map(c=>c.innerText.replace(/[\n\t]/g,' ').replace(/[●▲■]/g,'').trim()).join('\t')).join('\n')}
   try{await navigator.clipboard.writeText(tsv);toast('Copiado: pegalo en Excel')}catch(err){const ta=document.createElement('textarea');ta.value=tsv;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copiado: pegalo en Excel')}catch(e2){toast('No se pudo copiar')}ta.remove()}});
 function openMetas(){
-  const it=[['hd','Tiempo total pre ruta'],['tot','Meta de tiempo promedio por ruta','Fichada → salida, aplica a todas las rutas'],['hd','Tramos sin encierro'],...TS.map(t=>[t.k,t.n,'']),['hd','Tramos con encierro'],...TC.map(t=>[t.k,t.n,'']),
+  const it=[['hd','Tiempo total pre ruta'],['tot','Meta de tiempo (mediana) por ruta','Fichada → salida, aplica a todas las rutas'],['hd','Tramos sin encierro'],...TS.map(t=>[t.k,t.n,'']),['hd','Tramos con encierro'],...TC.map(t=>[t.k,t.n,'']),
     ['hd','Parámetros'],['encH','Umbral de encierro (horas)','Fichada − hora de carga 450 mayor a esto = ENCIERRO'],['encGeo','Estimar encierro con geocercas si falta la hora 450 (1 = sí, 0 = no)','Sin paso por dock = ENCIERRO; con paso por dock = NO ENCIERRO'],['maxTot','Descartar tiempos mayores a (min)','Para filtrar errores de registro'],['finMax','Post ruta: reemplazar financiero mayor a (min)','Se reemplaza por un valor entre 10 y 15 min (p. ej. por segunda vuelta)']];
   $('#metasForm').innerHTML=it.map(([k,n,d])=>k==='hd'?`<div class="hd">${n}</div>`:`<label>${n}${d?`<small>${d}</small>`:''}</label><input type="number" min="0" step="any" data-k="${k}" value="${METAS[k]}">`).join('');
   $('#mMetas').classList.add('on')}
