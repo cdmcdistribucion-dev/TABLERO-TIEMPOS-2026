@@ -536,7 +536,7 @@ body.locked header.top,body.locked main{visibility:hidden}
     </div>
     <div class="grid2">
       <div class="card"><h2>Distribución de jornadas</h2><p class="hint">Cantidad de jornadas por duración. En rojo, las que superan la jornada máxima.</p><div class="chart" id="chJHist"></div></div>
-      <div class="card"><h2>Jornada por operador</h2><p class="hint">Mediana, máxima y jornadas por encima del máximo.</p><div class="tblwrap" style="max-height:none"><table class="data" id="tblJOl"></table></div></div>
+      <div class="card"><h2>Jornada por operador</h2><p class="hint">Mediana y jornadas por encima del máximo.</p><div class="tblwrap" style="max-height:none"><table class="data" id="tblJOl"></table></div></div>
     </div>
     <div class="card">
       <div class="row" style="justify-content:space-between"><div><h2>Jornada por chofer</h2><p class="hint" style="margin:0">Mediana y máxima del período. En rojo, valores por encima de la jornada máxima.</p></div>
@@ -2093,13 +2093,13 @@ function renderJor(){
   ser.push({name:'Total CD',color:'var(--ink)',vals:pers.map(p=>agg(H.filter(r=>key(r)===p))),n:pers.map(p=>H.filter(r=>key(r)===p).length)});
   $('#legJ').innerHTML=ser.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')+`<span><i style="background:var(--crit)"></i>Más de ${MX} h</span>`;
   chartLine($('#chJ'),pers,ser,MX,lab,{unit:'h',red:MX,fmt:hh});
-  $('#tblJPer').innerHTML=`<thead><tr><th>${jGran==='m'?'Mes':jGran==='w'?'Semana':'Fecha'}</th><th class="n">Jornadas</th><th class="n">Mediana</th><th class="n">Máxima</th><th class="n">&gt; ${MX} h</th>${ols.map(o=>`<th class="n">${o} ${jMet==='max'?'máx.':'med.'}</th>`).join('')}</tr></thead><tbody>`+
-    pers.slice().reverse().map(p=>{const a=H.filter(r=>key(r)===p);const o8=a.filter(r=>r.h>MX).length;return`<tr><td>${jGran==='d'?fmtD(p)+' '+DOW[new Date(p+'T12:00').getDay()]:jGran==='w'?'Semana del '+fmtD(p):mLbl(p)}</td><td class="n">${a.length}</td><td class="n">${red(mean(a.map(r=>r.h)))}</td><td class="n">${red(Math.max(...a.map(r=>r.h)))}</td><td class="n">${o8?`<b style="color:var(--crit)">${o8}</b>`:'0'}</td>${ols.map(o=>`<td class="n">${red(agg(a.filter(r=>r.ol===o)))}</td>`).join('')}</tr>`}).join('')+'</tbody>';
+  $('#tblJPer').innerHTML=`<thead><tr><th>${jGran==='m'?'Mes':jGran==='w'?'Semana':'Fecha'}</th><th class="n">Jornadas</th><th class="n">Mediana</th><th class="n">&gt; ${MX} h</th>${ols.map(o=>`<th class="n">${o} ${jMet==='max'?'máx.':'med.'}</th>`).join('')}</tr></thead><tbody>`+
+    pers.slice().reverse().map(p=>{const a=H.filter(r=>key(r)===p);const o8=a.filter(r=>r.h>MX).length;return`<tr><td>${jGran==='d'?fmtD(p)+' '+DOW[new Date(p+'T12:00').getDay()]:jGran==='w'?'Semana del '+fmtD(p):mLbl(p)}</td><td class="n">${a.length}</td><td class="n">${red(mean(a.map(r=>r.h)))}</td><td class="n">${o8?`<b style="color:var(--crit)">${o8}</b>`:'0'}</td>${ols.map(o=>`<td class="n">${red(agg(a.filter(r=>r.ol===o)))}</td>`).join('')}</tr>`}).join('')+'</tbody>';
   // histograma
   chartJHist($('#chJHist'),H.map(r=>r.h),MX);
   // por OL
-  $('#tblJOl').innerHTML=`<thead><tr><th>Operador</th><th class="n">Jornadas</th><th class="n">Personas</th><th class="n">Mediana</th><th class="n">Máxima</th><th class="n">&gt; ${MX} h</th><th class="n">%</th></tr></thead><tbody>`+[...ols,'Total'].map(o=>{const a=o==='Total'?H:H.filter(r=>r.ol===o);const o8=a.filter(r=>r.h>MX).length;
-    return`<tr><td>${o==='Total'?'<b>Total</b>':'<b>'+o+'</b> <span class="muted">'+(OLN[o]||'')+'</span>'}</td><td class="n">${a.length}</td><td class="n">${new Set(a.map(r=>r.dni)).size}</td><td class="n">${red(mean(a.map(r=>r.h)))}</td><td class="n">${red(a.length?Math.max(...a.map(r=>r.h)):null)}</td><td class="n">${o8?`<b style="color:var(--crit)">${o8}</b>`:'0'}</td><td class="n">${pct(a.length?o8/a.length:null)}</td></tr>`}).join('')+'</tbody>';
+  $('#tblJOl').innerHTML=`<thead><tr><th>Operador</th><th class="n">Jornadas</th><th class="n">Personas</th><th class="n">Mediana</th><th class="n">&gt; ${MX} h</th><th class="n">%</th></tr></thead><tbody>`+[...ols,'Total'].map(o=>{const a=o==='Total'?H:H.filter(r=>r.ol===o);const o8=a.filter(r=>r.h>MX).length;
+    return`<tr><td>${o==='Total'?'<b>Total</b>':'<b>'+o+'</b> <span class="muted">'+(OLN[o]||'')+'</span>'}</td><td class="n">${a.length}</td><td class="n">${new Set(a.map(r=>r.dni)).size}</td><td class="n">${red(mean(a.map(r=>r.h)))}</td><td class="n">${o8?`<b style="color:var(--crit)">${o8}</b>`:'0'}</td><td class="n">${pct(a.length?o8/a.length:null)}</td></tr>`}).join('')+'</tbody>';
   // por chofer
   const by=new Map();H.forEach(r=>{(by.get(r.dni)||by.set(r.dni,[]).get(r.dni)).push(r)});const q=norm($('#jQ').value),sk=$('#jRankBy').value;
   const rk=[...by.values()].filter(a=>!q||norm(a[0].chofer+a[0].dni).includes(q)).map(a=>{const m=a.reduce((x,r)=>!x||r.h>x.h?r:x,null);return{ch:a[0].chofer,dni:a[0].dni,ol:a[0].ol,n:a.length,avg:mean(a.map(r=>r.h)),max:m.h,maxF:m.fecha,over:a.filter(r=>r.h>MX).length,ing:mean(a.map(r=>{const d=new Date(r.ing);return d.getHours()*60+d.getMinutes()})),sal:mean(a.map(r=>{const d=new Date(r.sal);return d.getHours()*60+d.getMinutes()}))}}).sort((a,b)=>b[sk]-a[sk]);
