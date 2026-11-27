@@ -2078,10 +2078,10 @@ function renderJor(){
   $('#jorEmpty').style.display='none';$('#jorBody').style.display='';
   const MX=parseFloat($('#jMax').value)||8;const J=JREC.filter(jOk),H=J.filter(r=>r.h!=null);const over=H.filter(r=>r.h>MX);
   const red=h=>h!=null&&h>MX?`<b style="color:var(--crit)">${hh(h)}</b>`:hh(h);
-  const L12=JLONG.filter(r=>jOk(r)&&!(r.imp&&r.imp.length)); // solo jornadas con fichadas reales (sin datos completados)
+  const L12=H.filter(r=>r.h>12); // solo la base cargada (las eliminadas no se cuentan)
   $('#jKpis').innerHTML=`<div class="kpi"><div class="l">Jornadas</div><div class="v">${r0(J.length)}</div><div class="s">${H.length} completas · ${new Set(J.map(r=>r.dni)).size} personas</div></div>
    <div class="kpi"><div class="l">Jornada</div><div class="v" style="${mean(H.map(r=>r.h))>MX?'color:var(--crit)':''}">${hh(mean(H.map(r=>r.h)))}<small>h</small></div><div class="s"></div></div>
-   <div class="kpi"><div class="l">Jornadas de más de 12 h</div><div class="v" style="${L12.length?'color:var(--crit)':''}">${r0(L12.length)}</div><div class="s">con fichadas reales · ${new Set(L12.map(r=>r.dni)).size} personas</div></div>
+   <div class="kpi"><div class="l">Jornadas de más de 12 h</div><div class="v" style="${L12.length?'color:var(--crit)':''}">${r0(L12.length)}</div><div class="s">en la base cargada · ${new Set(L12.map(r=>r.dni)).size} personas</div></div>
    <div class="kpi"><div class="l">Jornadas de más de ${MX} h</div><div class="v" style="color:var(--crit)">${pct(H.length?over.length/H.length:null)}</div><div class="s">${over.length} jornadas</div></div>
    <div class="kpi"><div class="l">Personas con jornadas de más de ${MX} h</div><div class="v">${r0(new Set(over.map(r=>r.dni)).size)}</div><div class="s">de ${new Set(H.map(r=>r.dni)).size}</div></div>
    <div class="kpi"><div class="l">Ingreso / salida</div><div class="split"><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.ing);return d.getHours()*60+d.getMinutes()})))}<span>ingreso</span></div><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.sal);return d.getHours()*60+d.getMinutes()})))}<span>salida</span></div></div></div>`;
@@ -2344,7 +2344,10 @@ function unlock(){$('#login').classList.add('off');document.body.classList.remov
     $('#lgBtn').disabled=false;$('#lgBtn').textContent='Ingresar'};
 })();
 $('#btnLogout').onclick=()=>{try{sessionStorage.removeItem('tt_k'+NS)}catch(e){}location.reload()};
-async function startApp(){renderBases();const saved=await idb.all();let any=false;for(const b of BASES)if(saved[b.k]){STORE[b.k]=saved[b.k];any=true}
+async function startApp(){renderBases();
+  if(COPIA){const WK='tt_wipe_20261127'+NS;let done=true;try{done=!!localStorage.getItem(WK)}catch(e){}
+    if(!done){for(const b of BASES)await idb.del(b.k);try{const g=gsGet();delete g.sig;delete g.at;gsSet(g);localStorage.setItem(WK,'1')}catch(e){}}} // borrado único de las bases guardadas en la copia
+  const saved=await idb.all();let any=false;for(const b of BASES)if(saved[b.k]){STORE[b.k]=saved[b.k];any=true}
   PRE.deleted=new Set(saved.__meta?.deleted||[]);
   try{await cleanStored()}catch(e){console.error(e)}
   renderBases();try{if(STORE.salida){build();setupFilters()}buildPost();setupPFilters();buildJor();setupJFilters();if(STORE.bees71){buildRuta();setupRFilters()}setupTFilters();if(any)$('#procMsg').innerHTML=`Bases cargadas${REC.length?' · Pre ruta: <b>'+REC.length+'</b> planillas':''}${RREC.length?' · En ruta: <b>'+RREC.length+'</b> planillas':''}`}catch(e){console.error(e)}
