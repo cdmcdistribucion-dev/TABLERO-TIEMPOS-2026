@@ -548,7 +548,6 @@ body.locked header.top,body.locked main{visibility:hidden}
       <div class="row"><input type="search" id="jQDet" placeholder="Buscar chofer, DNI, fecha…"><button class="btn sm" id="btnJXlsx" style="display:none">Descargar Excel</button><button class="btn sm" data-copy="jbase">Copiar tabla</button></div></div>
       <div class="tblwrap" style="margin-top:12px"><table class="data" id="tblJDet"></table></div>
       <div class="pager" id="pgJDet"></div>
-      <div class="qual" id="jQual" style="margin-top:14px"></div>
     </div>
   </div>
 </section>
@@ -2107,7 +2106,6 @@ function renderJor(){
   $('#tblJCh').innerHTML=`<thead><tr><th>#</th><th>Chofer</th><th>OL</th><th class="n">Jornadas</th><th class="n">Mediana</th><th class="n">Máxima</th><th>Fecha máxima</th><th class="n">Jornadas &gt; ${MX} h</th><th class="n">%</th><th class="n">Ingreso</th><th class="n">Salida</th></tr></thead><tbody>`+
     rk.slice(0,300).map((x,i)=>`<tr><td class="muted">${i+1}</td><td><b>${esc(x.ch)}</b> <span class="muted">${esc(x.dni)}</span></td><td>${x.ol}</td><td class="n">${x.n}</td><td class="n">${red(x.avg)}</td><td class="n">${red(x.max)}</td><td>${fmtD(x.maxF)}</td><td class="n">${x.over?`<b style="color:var(--crit)">${x.over}</b>`:'0'}</td><td class="n">${pct(x.over/x.n)}</td><td class="n">${fmtMin(x.ing)}</td><td class="n">${fmtMin(x.sal)}</td></tr>`).join('')+'</tbody>';
   renderJDet(J);
-  $('#jQual').innerHTML=`<div><b>${r0(JQ.n)}</b>jornadas armadas con el molinete</div><div><b>${pct(JQ.n?JQ.ch/JQ.n:null)}</b>de personas que están en la Salida de choferes</div><div><b>${pct(JQ.n?JQ.noSal/JQ.n:null)}</b>sin fichada de salida</div><div><b>${r0(JQ.long)}</b>eliminadas por más de 12 h</div>`;
 }
 function chartJHist(el,hs,MX){if(!hs.length){el.innerHTML='<p class="muted">Sin datos</p>';return}
   const bin=.5,mxv=Math.min(18,Math.max(...hs));const nb=Math.ceil((mxv+.001)/bin);const c=Array(nb).fill(0);hs.forEach(h=>c[Math.min(nb-1,Math.floor(h/bin))]++);
