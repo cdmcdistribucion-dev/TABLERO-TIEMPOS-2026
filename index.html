@@ -275,7 +275,7 @@ body.locked header.top,body.locked main{visibility:hidden}
 
     <div class="grid2">
       <div class="card">
-        <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Zonas del CD con mayor tiempo</h2><p class="hint" style="margin:0">Minutos promedio por ruta dentro de cada zona, entre la fichada y la salida (geocercas + checklist). Dock y gatera solo cuentan en rutas sin encierro.</p></div>
+        <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Zonas del CD con mayor tiempo</h2><p class="hint" style="margin:0">Minutos promedio por ruta dentro de cada zona, entre la fichada y la salida (geocercas + checklist). Dock, carga/descarga y gatera solo cuentan en rutas sin encierro (con encierro el camión ya está cargado).</p></div>
         <div class="seg" id="radMode"><button data-v="ol" class="on">Por operador</button><button data-v="tot">Total CD</button></div></div>
         <div class="legend" id="legRad" style="margin-top:10px"></div>
         <div class="chart" id="chRad"></div>
@@ -999,10 +999,12 @@ function build(){
       const any=G.some(g=>g.a<=R.sal&&g.b>=R.mol);
       if(R.dockIn!=null){R.enc='NO ENCIERRO';R.encSrc='Geocerca'}else if(any){R.enc='ENCIERRO';R.encSrc='Geocerca'}
     }
+    // con encierro el camión ya está cargado: no se consideran dock, carga/descarga ni gatera
+    if(R.enc==='ENCIERRO'){R.dockIn=R.dockOut=R.gatIn=R.gatOut=null}
     // tiempo por zona (geocercas) dentro de la ventana fichada -> salida
     R.Z=null;
     if(R.total!=null&&G){const Z={};let any=false;
-      for(const g of G){const ov=(Math.min(g.b,R.sal)-Math.max(g.a,R.mol))/MIN;if(ov<=0)continue;any=true;Z[g.z]=(Z[g.z]||0)+ov}
+      for(const g of G){if(R.enc==='ENCIERRO'&&'DKG'.includes(g.z))continue;const ov=(Math.min(g.b,R.sal)-Math.max(g.a,R.mol))/MIN;if(ov<=0)continue;any=true;Z[g.z]=(Z[g.z]||0)+ov}
       if(any){R.Z=Z}}
     // tramos
     R.T={};R.segOk=false;
@@ -1263,7 +1265,7 @@ function renderEsc(){
    <tr><th style="text-align:left;padding:6px 10px;color:var(--ink-2)">Sin encierro</th>${cell(r=>!E(r)&&T(r))}${cell(r=>!E(r)&&!T(r))}</tr></table>
 `;
 }
-const ZONES=[{z:'Y',n:'Playa de camiones'},{z:'D',n:'Dock depósito',sin:1},{z:'G',n:'Gatera expedición',sin:1},{z:'K',n:'Carga/descarga'},{z:'C',n:'Zona check 360°'},{z:'P',n:'Portería'},{z:'CHK',n:'Checklist'}];
+const ZONES=[{z:'Y',n:'Playa de camiones'},{z:'D',n:'Dock depósito',sin:1},{z:'G',n:'Gatera expedición',sin:1},{z:'K',n:'Carga/descarga',sin:1},{z:'C',n:'Zona check 360°'},{z:'P',n:'Portería'},{z:'CHK',n:'Checklist'}];
 function zoneAvg(recs){const o={};for(const Z of ZONES){let a;
   if(Z.z==='CHK')a=recs.map(r=>r.chkDur);else a=recs.filter(r=>r.Z&&(!Z.sin||r.enc==='NO ENCIERRO')).map(r=>r.Z[Z.z]||0);
   o[Z.z]=mean(a);o['n'+Z.z]=a.filter(x=>x!=null).length}return o}
