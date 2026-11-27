@@ -2078,10 +2078,10 @@ function renderJor(){
   $('#jorEmpty').style.display='none';$('#jorBody').style.display='';
   const MX=parseFloat($('#jMax').value)||8;const J=JREC.filter(jOk),H=J.filter(r=>r.h!=null);const over=H.filter(r=>r.h>MX);
   const red=h=>h!=null&&h>MX?`<b style="color:var(--crit)">${hh(h)}</b>`:hh(h);
-  const L12=JLONG.filter(jOk);
+  const L12=JLONG.filter(r=>jOk(r)&&!(r.imp&&r.imp.length)); // solo jornadas con fichadas reales (sin datos completados)
   $('#jKpis').innerHTML=`<div class="kpi"><div class="l">Jornadas</div><div class="v">${r0(J.length)}</div><div class="s">${H.length} completas · ${new Set(J.map(r=>r.dni)).size} personas</div></div>
    <div class="kpi"><div class="l">Jornada</div><div class="v" style="${mean(H.map(r=>r.h))>MX?'color:var(--crit)':''}">${hh(mean(H.map(r=>r.h)))}<small>h</small></div><div class="s"></div></div>
-   <div class="kpi"><div class="l">Jornadas de más de 12 h</div><div class="v" style="${L12.length?'color:var(--crit)':''}">${r0(L12.length)}</div><div class="s">eliminadas de la base · ${new Set(L12.map(r=>r.dni)).size} personas</div></div>
+   <div class="kpi"><div class="l">Jornadas de más de 12 h</div><div class="v" style="${L12.length?'color:var(--crit)':''}">${r0(L12.length)}</div><div class="s">con fichadas reales · ${new Set(L12.map(r=>r.dni)).size} personas</div></div>
    <div class="kpi"><div class="l">Jornadas de más de ${MX} h</div><div class="v" style="color:var(--crit)">${pct(H.length?over.length/H.length:null)}</div><div class="s">${over.length} jornadas</div></div>
    <div class="kpi"><div class="l">Personas con jornadas de más de ${MX} h</div><div class="v">${r0(new Set(over.map(r=>r.dni)).size)}</div><div class="s">de ${new Set(H.map(r=>r.dni)).size}</div></div>
    <div class="kpi"><div class="l">Ingreso / salida</div><div class="split"><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.ing);return d.getHours()*60+d.getMinutes()})))}<span>ingreso</span></div><div>${fmtMin(mean(H.map(r=>{const d=new Date(r.sal);return d.getHours()*60+d.getMinutes()})))}<span>salida</span></div></div></div>`;
