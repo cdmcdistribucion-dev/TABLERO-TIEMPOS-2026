@@ -557,6 +557,7 @@ const NS=(()=>{try{if(!/github\.io$/i.test(location.hostname))return'';const seg
    CONFIG
 ================================================================= */
 const OLN={RDV:'Río de las Vueltas',TL:'Transporte Levon',ST:'Special Truck',TOL:'Transporte Online',EB:'Express Beer'};
+const OL_OK=r=>!!OLN[r.ol]; // solo se muestran estos cinco operadores logísticos
 const TS=[ // sin encierro · en el orden del proceso
  {k:'s1',n:'Molinete → Team Room',s:'→ TR',c:'--mv',d:'Desplazamiento desde la primera fichada del molinete hasta el Team Room (0 si no corresponde).'},
  {k:'s2',n:'Team Room',s:'TR',c:'--e2',d:'Duración del Team Room, si corresponde.'},
@@ -967,7 +968,7 @@ function build(){
   const chk=new Map();(S.chk?.rows||[]).forEach(r=>{if(r.s!=='S')return;(chk.get(r.pt)||chk.set(r.pt,[]).get(r.pt)).push(r)});
   const geo=new Map();(S.geo?.rows||[]).forEach(r=>{if(r.z==='O')return;(geo.get(r.pt)||geo.set(r.pt,[]).get(r.pt)).push(r)});
   const H=METAS.encH*3600000;
-  const out=[];
+  let out=[];
   for(const s of sal){
     const R={fecha:s.f,planilla:s.p,chofer:s.ch,dni:s.dni,ol:s.ol||'—',obs:[]};
     const si=sic.get(s.p),bb=b450.get(s.p);
@@ -1046,7 +1047,7 @@ function build(){
     out.push(R);
   }
   out.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:(a.ol<b.ol?-1:a.ol>b.ol?1:0));
-  REC=out;
+  out=out.filter(OL_OK);REC=out;
   const n=out.length,c=f=>out.filter(f).length;
   const sin=out.filter(r=>r.enc==='NO ENCIERRO');
   QUAL={n,pat:c(r=>r.patente),sal:c(r=>r.sal!=null),mol:c(r=>r.mol!=null),b450:c(r=>r.c450!=null),chk:c(r=>r.chkIni!=null),tr:c(r=>r.tr==='SI'),
@@ -1480,7 +1481,7 @@ function buildRuta(){
   const R=STORE.rom?.rows;const rMap=new Map(),idx=new Map(),rStops=new Map();
   if(R){R.routes.forEach(r=>rMap.set(r.rid,r));R.stops.forEach(s=>{const rt=rMap.get(s.rid);if(!rt)return;const k=rt.f+'|'+s.cli;(idx.get(k)||idx.set(k,[]).get(k)).push(s.rid);(rStops.get(s.rid)||rStops.set(s.rid,[]).get(s.rid)).push(s)})}
   const byP=new Map();for(const r of B){(byP.get(r.p)||byP.set(r.p,[]).get(r.p)).push(r)}
-  const out=[],cli=[];
+  let out=[],cli=[];
   for(const [p,rows] of byP){
     const h=rows[0];const P={planilla:p,fecha:h.f,ol:h.ol,camion:h.ch,patente:h.pat,est:h.est,obs:[]};
     const sb=salB.get(p);P.chofer=sb?.ch||h.ch||'—';P.dni=sb?.dni||'';if(sb?.ol)P.ol=OLSIG(sb.ol)||P.ol;
@@ -1529,7 +1530,7 @@ function buildRuta(){
     for(const r of rows)cli.push({p,f:h.f,ol:P.ol,chofer:P.chofer,cli:r.cli,nom:r.nom,seg:r.seg,tv:r.tv!=null&&r.tv<600?r.tv:null,it:r.it,ef:r.ef,mot:r.mot,mrea:r.mrea,mmod:r.mmod,rech:!!(r.rech||r.ef==='DEFINITELY_RETURNED'||r.ef==='PARTIAL_DELIVERY'),rea:r.it>1||r.ef==='RESCHEDULED'||!!r.mrea,vuelta:P.vuelta});
   }
   out.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);
-  RREC=out;RCLI=cli;
+  out=out.filter(OL_OK);cli=cli.filter(OL_OK);RREC=out;RCLI=cli;
   // km plan vs real por patente y día
   const geoK=new Map();(STORE.geotab?.rows||[]).forEach(r=>geoK.set(r.pt+'|'+r.f,r));
   const G=new Map();for(const P of out){const pk=(P.patSic||P.patente);if(!pk)continue;const k=pk+'|'+P.fecha;(G.get(k)||G.set(k,[]).get(k)).push(P)}
@@ -1842,7 +1843,7 @@ function buildPost(){
     else R.obs.push('Patente sin geocercas');
     PREC.push(R);
   }
-  PREC.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);
+  PREC=PREC.filter(OL_OK);PREC.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);
   PQ={nCD,noReg,noMol,n:PREC.length,tot:PREC.filter(r=>r.tot!=null).length,seg:PREC.filter(r=>r.segOk).length};
 }
 const PF={months:new Set(),desde:'',hasta:'',ol:''};
@@ -2027,7 +2028,7 @@ function buildJor(){
       const R={fecha:f,dni:d,chofer:inf?.ch||('DNI '+d),ol:inf?.ol||'—',esChofer:!!inf,ing,sal,pl:plDay.get(d+'|'+f)||0,h:null,obs:[],imp:[]};if(IM.has('E'+d+'|'+ing))R.imp.push('Molinete entrada');if(sal!=null&&IM.has('S'+d+'|'+sal))R.imp.push('Molinete salida');
       if(sal==null){R.obs.push('Sin fichada de salida');noSal++}else{const h=(sal-ing)/3600000;if(h>18){R.obs.push('Más de 18 h');long++}else R.h=h}
       JREC.push(R)})}
-  JREC.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);JQ={n:JREC.length,noSal,long,ch:JREC.filter(r=>r.esChofer).length};
+  JREC=JREC.filter(OL_OK);JREC.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);JQ={n:JREC.length,noSal,long,ch:JREC.filter(r=>r.esChofer).length};
 }
 function setupJFilters(){const ds=JREC.map(r=>r.fecha).sort();const lastM=(ds[ds.length-1]||'').slice(0,7);JF.desde=ds.find(d=>d.startsWith(lastM))||ds[0]||'';JF.hasta=ds[ds.length-1]||'';$('#jDesde').value=JF.desde;$('#jHasta').value=JF.hasta;
   const ols=[...new Set(JREC.map(r=>r.ol))].filter(o=>o!=='—').sort();$('#jOl').innerHTML='<option value="">Todos</option>'+ols.map(o=>`<option value="${esc(o)}">${esc(o)}${OLN[o]?' · '+OLN[o]:''}</option>`).join('');JF.ol='';mpLast('jMes')}
