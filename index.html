@@ -290,7 +290,7 @@ body.locked header.top,body.locked main{visibility:hidden}
 
     <div class="grid2">
       <div class="card">
-        <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Zonas del CD con mayor tiempo</h2><p class="hint" style="margin:0">Minutos (mediana) por ruta dentro de cada zona, entre la fichada y la salida (geocercas + checklist). Dock, carga/descarga y gatera solo cuentan en rutas sin encierro (con encierro el camión ya está cargado).</p></div>
+        <div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Zonas del CD con mayor tiempo</h2><p class="hint" style="margin:0">Minutos (mediana) por ruta dentro de cada zona del tiempo de liberación, entre la fichada y la salida. Checklist = zona check 360° (registro del checklist; si falta, geocerca). Dock y gatera solo cuentan en rutas sin encierro (con encierro el camión ya está cargado).</p></div>
         <div class="seg" id="radMode"><button data-v="ol" class="on">Por operador</button><button data-v="tot">Total CD</button></div></div>
         <div class="legend" id="legRad" style="margin-top:10px"></div>
         <div class="chart" id="chRad"></div>
@@ -303,8 +303,8 @@ body.locked header.top,body.locked main{visibility:hidden}
     </div>
 
     <div class="grid2">
-      <div class="card"><h2>Sin encierro: ¿dónde se va el tiempo?</h2><p class="hint">Minutos (mediana) de cada tramo por operador (rutas con todos los tramos registrados).</p><div class="legend" id="legSin"></div><div class="chart" id="chSin"></div></div>
-      <div class="card"><h2>Con encierro: ¿dónde se va el tiempo?</h2><p class="hint">Minutos (mediana) de cada tramo por operador.</p><div class="legend" id="legCon"></div><div class="chart" id="chCon"></div></div>
+      <div class="card"><h2>¿Dónde se va el tiempo? Desplazamientos entre zonas</h2><p class="hint">Mediana total CD (minutos) del traslado de una zona a la siguiente, en el orden del proceso. Rutas con todos los tramos registrados. Raya vertical: meta del tramo.</p><div class="chart" id="chDesp"></div></div>
+      <div class="card"><h2>¿Dónde se va el tiempo? Atención en cada zona</h2><p class="hint">Mediana total CD (minutos) del tiempo de atención en cada zona. Team Room: rutas con Team Room. Carga en dock y gatera: rutas sin encierro. Raya vertical: meta.</p><div class="chart" id="chZona"></div></div>
     </div>
 
     <div class="grid2">
@@ -567,12 +567,13 @@ body.locked header.top,body.locked main{visibility:hidden}
 
 <script>
 /* Espacio de guardado propio de cada copia publicada (GitHub Pages comparte el mismo origen entre repos) */
+const COPIA=true; // true en TABLERO-TIEMPOS-2026 (copia), false en el tablero original
 const NS=(()=>{try{if(!/github\.io$/i.test(location.hostname))return'';const seg=(location.pathname.split('/').filter(Boolean)[0]||'').toLowerCase();return(!seg||seg==='tablero-tiempos')?'':'__'+seg.replace(/[^a-z0-9-]/g,'')}catch(e){return''}})();
 /* =================================================================
    CONFIG
 ================================================================= */
 const OLN={RDV:'Río de las Vueltas',TL:'Transporte Levon',ST:'Special Truck',TOL:'Transporte Online',EB:'Express Beer'};
-const OL_OK=r=>!!OLN[r.ol]; // solo se muestran estos cinco operadores logísticos
+const OL_OK=r=>!COPIA||!!OLN[r.ol]; // solo se muestran estos cinco operadores logísticos
 const TS=[ // sin encierro · en el orden del proceso
  {k:'s1',n:'Molinete → Team Room',s:'→ TR',c:'--mv',d:'Desplazamiento desde la primera fichada del molinete hasta el Team Room (0 si no corresponde).'},
  {k:'s2',n:'Team Room',s:'TR',c:'--e2',d:'Duración del Team Room, si corresponde.'},
@@ -594,7 +595,7 @@ const TC=[ // con encierro · el camión ya está cargado: sin dock ni gatera
 const STEPS=[['Molinete → Team Room','s1','e1'],['Team Room','s2','e2'],['→ Checklist','s3','e3'],['Checklist','s4','e4'],['Checklist → dock','s5',null],['Carga en dock','s6',null],['Dock → gatera','s7',null],['Gatera (verificación)','s8',null],['→ Portería','s9','e5'],['Control de portería','s10','e6']];
 const hashN=x=>{let h=2166136261;const t=String(x);for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return((h>>>0)%10007)/10007};
 const ALLT=[...TS,...TC];
-const META_DEF={encGeo:1,tot:30,s1:5,s2:15,s3:5,s4:4,s5:5,s6:20,s7:3,s8:5,s9:3,s10:5,e1:5,e2:15,e3:5,e4:4,e5:5,e6:5,encH:1,maxTot:240,finMax:30};
+const META_DEF={encGeo:1,tot:30,s1:5,s2:15,s3:5,s4:4,s5:5,s6:20,s7:3,s8:5,s9:3,s10:5,e1:5,e2:15,e3:5,e4:4,e5:5,e6:5,encH:1,maxTot:240,finMax:COPIA?30:0};
 let METAS=Object.assign({},META_DEF);
 try{const m=JSON.parse(localStorage.getItem('tt5_metas'+NS)||'null');if(m)METAS=Object.assign({},META_DEF,m)}catch(e){}
 
@@ -1047,7 +1048,7 @@ function build(){
         let p=R.mol;const nx=v=>{const x=Math.max(p,Math.min(R.sal,v??p));p=x;return x};
         const trB0=R.trHora!=null?R.trHora+(R.trDur||0)*MIN:null;
         const hasTr=R.tr==='SI'&&R.trHora!=null&&R.trHora>=R.mol&&trB0<=R.chkIni;
-        if(R.tr==='SI'&&!hasTr)R.obs.push('Team Room fuera del orden del proceso (no se suma al recorrido)');
+        R.trIn=hasTr;if(R.tr==='SI'&&!hasTr)R.obs.push('Team Room fuera del orden del proceso (no se suma al recorrido)');
         const tA=hasTr?nx(R.trHora):p,tB=hasTr?nx(trB0):p;
         const cA=nx(R.chkIni),cB=nx(R.chkFin??(R.chkIni+(R.chkDur||0)*MIN));
         if(R.portIn==null)R.obs.push('Sin geocerca de portería');
@@ -1276,6 +1277,18 @@ const OLCOL=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#6250d6'];
 function olColor(o){const all=[...new Set([...REC,...(typeof RREC!=='undefined'?RREC:[])].map(r=>r.ol))].sort();const i=all.indexOf(o);return OLCOL[i%OLCOL.length]}
 function vsMeta(v){if(v==null)return'–';const d=v-METAS.tot;const c=d<=0?'good':d<=5?'warn':'crit';const i=c==='good'?'●':c==='warn'?'▲':'■';
   return `${r0(v)}<small>min</small> <span class="st2 ${c}" style="font-size:14px"><span style="font-size:9px">${i}</span>${d>0?'+':''}${r0(d)}′</span>`}
+function chartSteps(el,items){
+  items=items.filter(i=>i.n>0&&i.v!=null);if(!items.length){el.innerHTML='<p class="muted">Sin rutas con todos los tramos registrados.</p>';return}
+  const w=W(el),lw=Math.min(190,w*.38),rw=56,bh=20,gap=14,top=8,bottom=22;const h=top+items.length*(bh+gap)+bottom;
+  const max=niceMax(Math.max(...items.map(i=>Math.max(i.v||0,i.meta||0)))*1.08);const x=v=>lw+(w-lw-rw)*v/max;
+  let s=`<svg viewBox="0 0 ${w} ${h}" height="${h}">`;
+  ticks(max).forEach(t=>{s+=`<line class="gl" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${h-bottom}"/><text class="ax" x="${x(t)}" y="${h-6}" text-anchor="middle">${t}</text>`});
+  items.forEach((it,i)=>{const y=top+i*(bh+gap);const tp=`<b>${esc(it.name)}</b><br>Mediana: <b>${r1(it.v)} min</b>${it.meta!=null?'<br>Meta: '+it.meta+' min':''}<br>${esc(it.sub)}`;
+    s+=`<text x="${lw-8}" y="${y+bh/2-1}" text-anchor="end" style="fill:var(--ink);font-size:11.5px">${esc(it.name)}</text><text class="ax" x="${lw-8}" y="${y+bh/2+10}" text-anchor="end" style="font-size:9.5px">${esc(it.sub)}</text>`;
+    s+=`<rect x="${lw}" y="${y-3}" width="${w-lw-rw}" height="${bh+6}" fill="transparent" data-tip="${esc(tp)}"/><path d="${rrect(lw,y,Math.max(2,x(it.v)-lw),bh,4,'r')}" fill="${it.color}" data-tip="${esc(tp)}"/><text class="lbl" x="${x(Math.max(it.v,it.meta||0))+6}" y="${y+bh/2+4}">${r1(it.v)}′</text>`;
+    if(it.meta!=null)s+=`<line x1="${x(it.meta)}" x2="${x(it.meta)}" y1="${y-4}" y2="${y+bh+4}" stroke="var(--ink-2)" stroke-width="2" style="pointer-events:none"/>`});
+  el.innerHTML=s+'</svg>';
+}
 function chartHBars(el,items,meta){
   if(!items.length){el.innerHTML='<p class="muted">Sin datos</p>';return}
   const w=W(el),lw=Math.min(200,w*.36),rw=48,bh=18,gap=9,top=16,bottom=22;const h=top+items.length*(bh+gap)+bottom;
@@ -1285,7 +1298,7 @@ function chartHBars(el,items,meta){
   items.forEach((it,i)=>{const y=top+i*(bh+gap);
     s+=`<text x="${lw-8}" y="${y+bh/2-1}" text-anchor="end" style="fill:var(--ink);font-size:11.5px">${esc(it.name.length>26?it.name.slice(0,25)+'…':it.name)}</text><text class="ax" x="${lw-8}" y="${y+bh/2+10}" text-anchor="end" style="font-size:9.5px">${esc(it.sub||'')}</text>`;
     s+=`<path d="${rrect(lw,y,x(it.v)-lw,bh,4,'r')}" fill="${it.color||'var(--s2)'}" data-tip="${esc(it.tip||'')}"/><text class="lbl" x="${x(it.v)+6}" y="${y+bh/2+4}">${r0(it.v)}′</text>`});
-  if(meta!=null){s+=`<line x1="${x(meta)}" x2="${x(meta)}" y1="${top-6}" y2="${h-bottom}" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${x(meta)+4}" y="${top-6}" style="font-size:10.5px;fill:var(--ink-2)">${meta===METAS.tot?"meta "+meta+"′":"prom. "+r1(meta)+"′"}</text>`}
+  if(meta!=null){s+=`<line x1="${x(meta)}" x2="${x(meta)}" y1="${top-6}" y2="${h-bottom}" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${x(meta)+4}" y="${top-6}" style="font-size:10.5px;fill:var(--ink-2)">${meta===METAS.tot?"meta "+meta+"′":"med. "+r1(meta)+"′"}</text>`}
   el.innerHTML=s+'</svg>';
 }
 function renderEsc(){
@@ -1301,9 +1314,9 @@ function renderEsc(){
    <tr><th style="text-align:left;padding:6px 10px;color:var(--ink-2)">Sin encierro</th>${cell(r=>!E(r)&&T(r))}${cell(r=>!E(r)&&!T(r))}</tr></table>
 `;
 }
-const ZONES=[{z:'Y',n:'Playa de camiones'},{z:'D',n:'Dock depósito',sin:1},{z:'G',n:'Gatera expedición',sin:1},{z:'K',n:'Carga/descarga',sin:1},{z:'C',n:'Zona check 360°'},{z:'P',n:'Portería'},{z:'CHK',n:'Checklist'}];
+const ZONES=[{z:'CHK',n:'Checklist (zona check 360°)'},{z:'D',n:'Dock depósito',sin:1},{z:'G',n:'Gatera expedición',sin:1},{z:'P',n:'Portería'}];
 function zoneAvg(recs){const o={};for(const Z of ZONES){let a;
-  if(Z.z==='CHK')a=recs.map(r=>r.chkDur);else a=recs.filter(r=>r.Z&&(!Z.sin||r.enc==='NO ENCIERRO')).map(r=>r.Z[Z.z]||0);
+  if(Z.z==='CHK')a=recs.map(r=>r.chkDur!=null?r.chkDur:(r.Z&&r.Z.C!=null?r.Z.C:null));else a=recs.filter(r=>r.Z&&(!Z.sin||r.enc==='NO ENCIERRO')).map(r=>r.Z[Z.z]||0);
   o[Z.z]=mean(a);o['n'+Z.z]=a.filter(x=>x!=null).length}return o}
 let radMode='ol';
 function renderRadar(C,ols){
@@ -1361,9 +1374,12 @@ function renderPre(){
    <div class="kpi"><div class="l">Checklist de salida</div><div class="v">${r1(mean(R.map(r=>r.chkDur)))}<small>min</small></div><div class="s">duración (mediana) · Team Room: ${R.filter(r=>r.tr==='SI').length} rutas</div></div>`;
   const ols=[...new Set(R.map(r=>r.ol))].sort();
   const mkG=(recs,segs)=>{const g=ols.map(o=>{const a=compAvg(recs.filter(r=>r.ol===o),segs);return{name:o,n:a.n,vals:a,tot:a.tot}}).filter(x=>x.n>0).sort((a,b)=>b.tot-a.tot);const a=compAvg(recs,segs);if(a.n)g.push({name:'Total CD',n:a.n,vals:a,tot:a.tot,bold:true});return g};
-  $('#legSin').innerHTML=TS.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}</span>`).join('');
-  $('#legCon').innerHTML=TC.map(s=>`<span><i style="background:var(${s.c})"></i>${s.n}</span>`).join('');
-  chartComp($('#chSin'),mkG(sin,TS),TS);chartComp($('#chCon'),mkG(con,TC),TC);
+  {const Sg=C.filter(r=>r.segOk),Ss=Sg.filter(r=>r.enc==='NO ENCIERRO'),Se=Sg.filter(r=>r.enc==='ENCIERRO'),Str=Sg.filter(r=>r.trIn);const tk=(r,a,b)=>r.T[r.enc==='ENCIERRO'?b:a];
+   const it=(name,rs,f,meta,color,sub)=>{const v=median(rs.map(f));return{name,v,n:rs.length,meta,color,sub:(sub?sub+' · ':'')+rs.length.toLocaleString('es-AR')+' rutas'}};
+   chartSteps($('#chDesp'),[it('Molinete → Team Room',Str,r=>tk(r,'s1','e1'),METAS.s1,'var(--mv)','con Team Room'),it('→ Checklist',Sg,r=>tk(r,'s3','e3'),METAS.s3,'var(--mv)','desde molinete o Team Room'),
+     it('Checklist → dock',Ss,r=>r.T.s5,METAS.s5,'var(--mv)','sin encierro'),it('Dock → gatera',Ss,r=>r.T.s7,METAS.s7,'var(--mv)','sin encierro'),it('Gatera → portería',Ss,r=>r.T.s9,METAS.s9,'var(--mv)','sin encierro'),it('Checklist → portería',Se,r=>r.T.e5,METAS.e5,'var(--mv)','con encierro')]);
+   chartSteps($('#chZona'),[it('Team Room',Str,r=>tk(r,'s2','e2'),METAS.s2,'var(--e2)','con Team Room'),it('Checklist',Sg,r=>tk(r,'s4','e4'),METAS.s4,'var(--s1)'),
+     it('Carga en dock',Ss,r=>r.T.s6,METAS.s6,'var(--s2)','sin encierro'),it('Gatera (verificación)',Ss,r=>r.T.s8,METAS.s8,'var(--s3)','sin encierro'),it('Control de portería',Sg,r=>tk(r,'s10','e6'),METAS.s10,'var(--s4)')])}
   const ord=ols.slice().sort((a,b)=>(mean(C.filter(r=>r.ol===b).map(r=>r.total))||0)-(mean(C.filter(r=>r.ol===a).map(r=>r.total))||0));
   chartGrouped($('#chOl'),ord,[{name:'Con encierro',color:'var(--enc-con)',vals:ord.map(o=>mean(con.filter(r=>r.ol===o).map(r=>r.total))),n:ord.map(o=>con.filter(r=>r.ol===o).length)},
     {name:'Sin encierro',color:'var(--enc-sin)',vals:ord.map(o=>mean(sin.filter(r=>r.ol===o).map(r=>r.total))),n:ord.map(o=>sin.filter(r=>r.ol===o).length)}],
@@ -1939,13 +1955,14 @@ function buildTree(){
   const R=RREC.filter(tOk),Rt=R.filter(r=>r.tRuta!=null);const segOf=new Map(RREC.map(r=>[r.planilla,r.seg]));
   const Q=PREC.filter(tOk),Qt=Q.filter(r=>r.tot!=null),Qs=Qt.filter(r=>r.segOk);
   const isS=s=>/SUPER|SMK/.test(s||'');
-  const pre=nd('pre','Pre ruta',Pt.map(r=>r.total),TGT.pre,null,[
-    nd('tr','Team Room',P.filter(r=>r.tr==='SI').map(r=>r.trDur),TGT.tr,null,[],'Duración del registro en Forms'),
-    nd('chk','Checklist',P.map(r=>r.chkDur),TGT.chk),
-    nd('carga','Carga de camión',Psin.map(r=>r.T.s6),TGT.carga,null,[],'Solo sin encierro · dock'),
-    nd('gatPre','Gatera (verificación)',Psin.map(r=>r.T.s8),null,null,[],'Solo sin encierro'),
-    nd('portPre','Control de portería',Ps.map(r=>r.T[r.enc==='ENCIERRO'?'e6':'s10']),TGT.portPre,null,[],'Portería → salida SIC'),
-    nd('despPre','Desplazamientos internos',Ps.map(r=>r.enc==='ENCIERRO'?r.T.e1+r.T.e3+r.T.e5:r.T.s1+r.T.s3+r.T.s5+r.T.s7+r.T.s9),null,null,[],'Entre cada paso dentro del CD')]);
+  const tgtStep={'Team Room':TGT.tr,'Checklist':TGT.chk,'Carga en dock':TGT.carga,'Control de portería':TGT.portPre};
+  const SCN=[['Con Team Room · sin encierro',true,false],['Sin Team Room · con encierro',false,true],['Con Team Room · con encierro',true,true],['Sin Team Room · sin encierro',false,false]];
+  const pre=nd('pre','Pre ruta',Pt.map(r=>r.total),TGT.pre,null,SCN.map(([n,tr,enc],i)=>{
+    const f=r=>(r.tr==='SI')===tr&&(r.enc==='ENCIERRO')===enc;const rs=Pt.filter(f),ss=Ps.filter(f);
+    const leaves=STEPS.filter(([,a,b],j)=>(enc?b:a)&&(tr||j>1)).map(([sn,a,b])=>{const k=enc?b:a;
+      const vals=sn==='Team Room'?ss.map(r=>r.trIn?r.T[k]:r.trDur):sn==='Molinete → Team Room'?ss.filter(r=>r.trIn).map(r=>r.T[k]):ss.map(r=>r.T[k]);
+      return nd('pre'+i+k,sn,vals,tgtStep[sn]??null,null,[],/→/.test(sn)?'Desplazamiento':'')});
+    return nd('pre'+i,n,rs.map(r=>r.total),TGT.pre,null,leaves,`${rs.length.toLocaleString('es-AR')} rutas · ${pct(Pt.length?rs.length/Pt.length:null)} del total`)}));
   const atSeg=f=>Rt.filter(r=>f(r.seg)).map(r=>r.tAt);
   const ruta=nd('ruta','En ruta',Rt.map(r=>r.tRuta),TGT.ruta,Rt.map(r=>r.plan?.tRota),[
     nd('at','Atención a clientes',Rt.map(r=>r.tAt),TGT.at,Rt.map(r=>r.plan?.tAt),[
@@ -1974,7 +1991,7 @@ function renderTree(){
   if(!REC.length&&!RREC.length&&!PREC.length){$('#treeEmpty').style.display='';$('#treeBody').style.display='none';return}
   $('#treeEmpty').style.display='none';$('#treeBody').style.display='';
   const root=buildTree();const el=$('#chTree');const w=Math.max(900,W(el));
-  const NW=Math.min(250,(w-40)/4-40),NH=78,GY=12,depthMax=3,GX=(w-NW*(depthMax+1))/depthMax;
+  const NW=Math.min(250,(w-40)/4-40),NH=74,GY=8,depthMax=3,GX=(w-NW*(depthMax+1))/depthMax;
   let leaf=0;const nodes=[];
   (function lay(n,d){n.d=d;if(!n.kids.length){n.y=leaf*(NH+GY);leaf++}else{n.kids.forEach(k=>lay(k,d+1));n.y=(n.kids[0].y+n.kids[n.kids.length-1].y)/2}n.x=d*(NW+GX);nodes.push(n)})(root,0);
   const h=leaf*(NH+GY);let s=`<svg viewBox="0 0 ${w} ${h}" height="${h}">`;
@@ -2042,7 +2059,7 @@ function buildJor(){
     ings.forEach((ing,i)=>{const lim=Math.min(ing+20*3600000,ings[i+1]??Infinity);let sal=null;for(const t of so){if(t>ing&&t<lim)sal=t;if(t>=lim)break}
       const inf=info.get(d);const f=ymdT(ing);
       const R={fecha:f,dni:d,chofer:inf?.ch||('DNI '+d),ol:inf?.ol||'—',esChofer:!!inf,ing,sal,pl:plDay.get(d+'|'+f)||0,h:null,obs:[],imp:[]};if(IM.has('E'+d+'|'+ing))R.imp.push('Molinete entrada');if(sal!=null&&IM.has('S'+d+'|'+sal))R.imp.push('Molinete salida');
-      if(sal==null){R.obs.push('Sin fichada de salida');noSal++}else{const h=(sal-ing)/3600000;if(h>18){R.obs.push('Más de 18 h');long++}else R.h=h}
+      if(sal==null){R.obs.push('Sin fichada de salida');noSal++}else{const h=(sal-ing)/3600000;if(h>12){long++;return}R.h=h}
       JREC.push(R)})}
   JREC=JREC.filter(OL_OK);JREC.sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:0);JQ={n:JREC.length,noSal,long,ch:JREC.filter(r=>r.esChofer).length};
 }
@@ -2089,7 +2106,7 @@ function renderJor(){
   $('#tblJCh').innerHTML=`<thead><tr><th>#</th><th>Chofer</th><th>OL</th><th class="n">Jornadas</th><th class="n">Mediana</th><th class="n">Máxima</th><th>Fecha máxima</th><th class="n">Jornadas &gt; ${MX} h</th><th class="n">%</th><th class="n">Ingreso (med.)</th><th class="n">Salida (med.)</th></tr></thead><tbody>`+
     rk.slice(0,300).map((x,i)=>`<tr><td class="muted">${i+1}</td><td><b>${esc(x.ch)}</b> <span class="muted">${esc(x.dni)}</span></td><td>${x.ol}</td><td class="n">${x.n}</td><td class="n">${red(x.avg)}</td><td class="n">${red(x.max)}</td><td>${fmtD(x.maxF)}</td><td class="n">${x.over?`<b style="color:var(--crit)">${x.over}</b>`:'0'}</td><td class="n">${pct(x.over/x.n)}</td><td class="n">${fmtMin(x.ing)}</td><td class="n">${fmtMin(x.sal)}</td></tr>`).join('')+'</tbody>';
   renderJDet(J);
-  $('#jQual').innerHTML=`<div><b>${r0(JQ.n)}</b>jornadas armadas con el molinete</div><div><b>${pct(JQ.n?JQ.ch/JQ.n:null)}</b>de personas que están en la Salida de choferes</div><div><b>${pct(JQ.n?JQ.noSal/JQ.n:null)}</b>sin fichada de salida</div><div><b>${r0(JQ.long)}</b>descartadas por más de 18 h</div>`;
+  $('#jQual').innerHTML=`<div><b>${r0(JQ.n)}</b>jornadas armadas con el molinete</div><div><b>${pct(JQ.n?JQ.ch/JQ.n:null)}</b>de personas que están en la Salida de choferes</div><div><b>${pct(JQ.n?JQ.noSal/JQ.n:null)}</b>sin fichada de salida</div><div><b>${r0(JQ.long)}</b>eliminadas por más de 12 h</div>`;
 }
 function chartJHist(el,hs,MX){if(!hs.length){el.innerHTML='<p class="muted">Sin datos</p>';return}
   const bin=.5,mxv=Math.min(18,Math.max(...hs));const nb=Math.ceil((mxv+.001)/bin);const c=Array(nb).fill(0);hs.forEach(h=>c[Math.min(nb-1,Math.floor(h/bin))]++);
@@ -2234,7 +2251,7 @@ function csvDatos(text){const L=text.split(/\r?\n/);const out=[];let cur='';
     if(i===0&&a.trim()==='datos')continue;cur+=a;if(b==='1'){out.push(cur);cur=''}}
   if(cur)out.push(cur);return out}
 function hashLines(lines){let h=2166136261,n=0;for(const l of lines){n+=l.length;for(let i=0;i<l.length;i+=7){h^=l.charCodeAt(i);h=Math.imul(h,16777619)}}return(h>>>0).toString(36)+'.'+n}
-function gsShow(extra){const g=gsGet();$('#gsUrl').value=g.url||'';
+function gsShow(extra){if(!COPIA)return;const g=gsGet();$('#gsUrl').value=g.url||'';
   $('#gsMsg').innerHTML=(extra?extra+'<br>':'')+(g.url?`Enlace guardado${g.at?` · última actualización desde Sheets: <b>${new Date(g.at).toLocaleString('es-AR')}</b>`:' · todavía no se cargó'}`:'Sin enlace de Google Sheets: el tablero usa las bases cargadas a mano.')}
 let gsBusy=false;
 async function gsSync(force){
@@ -2332,7 +2349,7 @@ async function startApp(){renderBases();const saved=await idb.all();let any=fals
   try{await cleanStored()}catch(e){console.error(e)}
   renderBases();try{if(STORE.salida){build();setupFilters()}buildPost();setupPFilters();buildJor();setupJFilters();if(STORE.bees71){buildRuta();setupRFilters()}setupTFilters();if(any)$('#procMsg').innerHTML=`Bases cargadas${REC.length?' · Pre ruta: <b>'+REC.length+'</b> planillas':''}${RREC.length?' · En ruta: <b>'+RREC.length+'</b> planillas':''}`}catch(e){console.error(e)}
   renderDiag();const h=location.hash.slice(1);if(['base','pre','ruta','post','arbol','jor'].includes(h))go(h);
-  gsShow();if(gsGet().url)setTimeout(()=>gsSync(false),300)}
+  if(!COPIA){const g=$('#gsCard');if(g)g.remove()}else{gsShow();if(gsGet().url)setTimeout(()=>gsSync(false),300)}}
 </script>
 </body>
 </html>
